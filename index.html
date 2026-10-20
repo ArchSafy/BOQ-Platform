@@ -1,45 +1,409 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>منصة جداول الكميات وكراسات الشروط | أمانة المنطقة الشرقية</title>
-  
+  <title>النظام المتكامل لإعداد وتسعير كراسات الطرح | الإدارة العامة للإشراف</title>
+  <meta name="description" content="المنصة الرقمية الموحدة لإعداد وتسعير كراسات الطرح وجداول الكميات لمشاريع الأنسنة والطرق وتصريف الأمطار والأنفاق والجسور والمخططات الخاصة بالإدارة العامة للإشراف.">
+  <meta name="theme-color" content="#005a36">
+
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
+
   <!-- App Stylesheet -->
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/landing.css">
 
   <!-- SheetJS for Excel Generation -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  
+
   <!-- html2pdf for Official PDF Generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <!-- docx.js for Word Document Generation -->
   <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
 </head>
+
 <body>
+  <!-- تفعيل صفحة الهبوط فورياً قبل الرندر إذا لم تكن هناك جلسة نشطة -->
+  <script>
+    if (!sessionStorage.getItem("EPM_BOQ_SESSION_V1")) document.body.classList.add("landing-active");
+  </script>
+
+  <!-- ==================== صفحة الهبوط وبوابة الدخول (Landing Page) ==================== -->
+  <div id="landingPage" class="landing" aria-hidden="true">
+
+    <!-- الخلفية: شبكة هندسية وشبكات البنية التحتية الشاملة -->
+    <div class="lp-bg" aria-hidden="true">
+      <div class="lp-bg-grid"></div>
+      <div class="lp-bg-glow g1"></div>
+      <div class="lp-bg-glow g2"></div>
+      <svg class="lp-network" viewBox="0 0 1440 980" preserveAspectRatio="xMidYMid slice">
+        <!-- شبكة الطرق -->
+        <path class="net-road" d="M-60 740 C 300 650, 520 840, 860 720 S 1300 570, 1520 610"/>
+        <path class="net-road-center" d="M-60 740 C 300 650, 520 840, 860 720 S 1300 570, 1520 610"/>
+        <path class="net-road" d="M1200 -40 C 1160 240, 1280 430, 1230 1020"/>
+        <path class="net-road-center" d="M1200 -40 C 1160 240, 1280 430, 1230 1020"/>
+        <!-- شبكات تصريف مياه الأمطار ودرء السيول -->
+        <path class="net-pipe" d="M-20 520 H 380 V 1000"/>
+        <path class="net-pipe" d="M960 -20 V 260 H 1460"/>
+        <path class="net-pipe" d="M380 520 H 700 V 760"/>
+        <!-- الجسور الإنشائية المعلقة -->
+        <path class="net-structure" d="M60 300 H 440"/>
+        <path class="net-structure" d="M80 300 Q 250 160 420 300"/>
+        <path class="net-structure" d="M130 300 V 255 M180 300 V 228 M250 300 V 218 M320 300 V 228 M370 300 V 255"/>
+        <path class="net-structure" d="M60 300 V 340 M440 300 V 340"/>
+        <!-- الأنفاق والقطاعات الأرضية -->
+        <path class="net-structure" d="M1290 420 V 380 A 70 70 0 0 1 1430 380 V 420 Z"/>
+        <path class="net-structure" d="M1315 420 V 385 A 45 45 0 0 1 1405 385 V 420"/>
+        <!-- تقسيم المخططات الخاصة -->
+        <path class="net-structure" d="M980 820 h70 v60 h-70 z M1060 820 h70 v60 h-70 z M980 890 h70 v60 h-70 z M1060 890 h70 v60 h-70 z"/>
+        <!-- العقد والمحطات الهندسية -->
+        <circle class="net-node-pulse" cx="380" cy="520" r="8"/>
+        <circle class="net-node" cx="380" cy="520" r="6"/>
+        <circle class="net-node-pulse" cx="960" cy="260" r="8" style="animation-delay:1s"/>
+        <circle class="net-node" cx="960" cy="260" r="6"/>
+        <circle class="net-node-pulse" cx="700" cy="760" r="8" style="animation-delay:2s"/>
+        <circle class="net-node" cx="700" cy="760" r="6"/>
+        <circle class="net-node-pulse" cx="1232" cy="640" r="8" style="animation-delay:.5s"/>
+        <circle class="net-node" cx="1232" cy="640" r="6"/>
+      </svg>
+    </div>
+
+    <!-- الشريط العلوي لصفحة الهبوط -->
+    <header class="lp-topbar">
+      <div class="lp-container lp-topbar-inner">
+        <div class="lp-brand">
+          <div class="lp-brand-emblem" style="overflow:hidden; padding: 4px;">
+            <img src="img/amana-logo.png" alt="أمانة المنطقة الشرقية" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
+          </div>
+          <div class="lp-brand-text">
+            <strong>أمانة المنطقة الشرقية</strong>
+            <span>الإدارة العامة للإشراف</span>
+          </div>
+        </div>
+
+        <nav class="lp-nav" aria-label="أقسام الصفحة">
+          <a href="#lp-projects" id="lpNavProjects">أنواع المشاريع</a>
+          <a href="#lp-workflow" id="lpNavWorkflow">آلية العمل</a>
+          <a href="#lp-outputs" id="lpNavOutputs">مخرجات الطرح</a>
+        </nav>
+
+        <span class="lp-secure-pill"><i class="fas fa-shield-halved"></i> بوابة داخلية مؤمنة</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- القسم الرئيسي (Hero Section) -->
+      <section class="lp-hero">
+        <div class="lp-container lp-hero-grid">
+
+          <div class="lp-hero-content">
+            <span class="lp-eyebrow"><span class="lp-eyebrow-dot"></span> المنصة الموحدة لإعداد مستندات الطرح الهندسية</span>
+
+            <h1 class="lp-title">
+              النظام المتكامل لإعداد وتسعير
+              <span class="lp-title-accent">كراسات الطرح</span>
+            </h1>
+
+            <p class="lp-subtitle">المنصة الرقمية الموحدة لإدارة وتجهيز وثائق المشاريع الهندسية بالإدارة العامة للإشراف</p>
+
+            <!-- محاكاة تفاعلية: معالجة البيانات الهندسية والمستندات وتحولها لجداول كميات وكراسات رسمية -->
+            <div class="lp-pipeline" aria-label="مسار معالجة البيانات الهندسية">
+              <div class="lp-stage">
+                <div class="lp-stage-head"><i class="fas fa-compass-drafting"></i> البيانات والمخططات الهندسية</div>
+                <div class="lp-stage-canvas lp-blueprint">
+                  <svg viewBox="0 0 200 92" aria-hidden="true">
+                    <path class="bp-line soft" d="M10 82 H190"/>
+                    <path class="bp-line" d="M8 58 C 60 58, 70 26, 120 26 S 175 16, 196 16"/>
+                    <path class="bp-line d2" d="M22 72 H118"/>
+                    <path class="bp-line d2" d="M28 72 Q 70 34 112 72"/>
+                    <path class="bp-line soft" d="M50 72 V56 M70 72 V50 M90 72 V56"/>
+                    <path class="bp-line d3" d="M140 72 V58 A 13 13 0 0 1 166 58 V72"/>
+                  </svg>
+                  <div class="lp-scanline"></div>
+                </div>
+              </div>
+
+              <div class="lp-connector" aria-hidden="true">
+                <span class="lp-connector-dot"></span>
+                <span class="lp-connector-dot late"></span>
+                <i class="fas fa-arrow-left"></i>
+              </div>
+
+              <div class="lp-stage">
+                <div class="lp-stage-head"><i class="fas fa-table-cells"></i> جداول الكميات المسعّرة (BOQ)</div>
+                <div class="lp-stage-canvas lp-table" aria-hidden="true">
+                  <div class="lp-table-row head"><span></span><span></span><span></span><span></span></div>
+                  <div class="lp-table-row"><span></span><span></span><span></span><span></span></div>
+                  <div class="lp-table-row"><span></span><span></span><span></span><span></span></div>
+                  <div class="lp-table-row"><span></span><span></span><span></span><span></span></div>
+                  <div class="lp-table-row total"><span></span><span></span><span></span><span></span></div>
+                </div>
+              </div>
+
+              <div class="lp-connector" aria-hidden="true">
+                <span class="lp-connector-dot"></span>
+                <span class="lp-connector-dot late"></span>
+                <i class="fas fa-arrow-left"></i>
+              </div>
+
+              <div class="lp-stage">
+                <div class="lp-stage-head"><i class="fas fa-file-signature"></i> كراسة الشروط والمواصفات</div>
+                <div class="lp-stage-canvas lp-doc" aria-hidden="true">
+                  <div class="lp-doc-page">
+                    <span class="dl title"></span>
+                    <span class="dl"></span>
+                    <span class="dl"></span>
+                    <span class="dl short"></span>
+                    <span class="dl"></span>
+                    <span class="lp-doc-seal"><i class="fas fa-check"></i></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- تصنيف أنواع المشاريع الهندسية الشاملة -->
+            <div class="lp-types">
+              <div class="lp-types-label">إعداد وتسعير كراسات الطرح لجميع قطاعات المشاريع:</div>
+              <div class="lp-chip-row">
+                <span class="lp-chip"><i class="fas fa-tree"></i> مشاريع الأنسنة</span>
+                <span class="lp-chip"><i class="fas fa-road"></i> الطرق والسلامة</span>
+                <span class="lp-chip"><i class="fas fa-cloud-showers-heavy"></i> تصريف الأمطار والسيول</span>
+                <span class="lp-chip"><i class="fas fa-archway"></i> الأنفاق الأرضية</span>
+                <span class="lp-chip"><i class="fas fa-bridge"></i> الجسور والكباري</span>
+                <span class="lp-chip"><i class="fas fa-map-location-dot"></i> المخططات الخاصة</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- بطاقة الدخول (Authentication Card) المركزية الواضحة -->
+          <div class="lp-auth-wrap">
+            <form class="lp-auth-card" id="landingAuthCard" novalidate autocomplete="on">
+              <div class="lp-auth-head">
+                <div class="lp-auth-icon" style="overflow:hidden; padding: 8px;">
+                  <img src="img/amana-logo.png" alt="أمانة المنطقة الشرقية" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));">
+                </div>
+                <h2>تسجيل الدخول إلى المنصة</h2>
+                <p>أدخل بيانات الحساب للوصول إلى أدوات إعداد وثائق الطرح</p>
+              </div>
+
+              <div class="lp-field">
+                <label for="lpUsername">اسم المستخدم</label>
+                <div class="lp-input-wrap">
+                  <i class="fas fa-user"></i>
+                  <input type="text" id="lpUsername" name="username" class="lp-input" placeholder="اسم المستخدم (مثال: eng.ahmed)" autocomplete="username" required>
+                </div>
+                <div class="lp-field-error" role="alert"></div>
+              </div>
+
+              <div class="lp-field">
+                <label for="lpPassword">كلمة المرور</label>
+                <div class="lp-input-wrap lp-password">
+                  <i class="fas fa-lock"></i>
+                  <input type="password" id="lpPassword" name="password" class="lp-input" placeholder="كلمة المرور" autocomplete="current-password" required>
+                  <button type="button" class="lp-toggle-pass" id="lpTogglePassword" aria-label="إظهار كلمة المرور"><i class="fas fa-eye"></i></button>
+                </div>
+                <div class="lp-field-error" role="alert"></div>
+              </div>
+
+              <div class="lp-auth-meta">
+                <label class="lp-check"><input type="checkbox" id="lpRemember"> تذكّر اسم المستخدم</label>
+                <span class="lp-caps-hint" id="lpCapsHint"><i class="fas fa-triangle-exclamation"></i> مفتاح Caps Lock مفعّل</span>
+              </div>
+
+              <button type="submit" class="lp-submit" id="lpSubmitBtn">
+                <span class="lp-spinner" aria-hidden="true"></span>
+                <span class="lp-submit-label">تسجيل الدخول لبدء مشروع جديد</span>
+                <i class="fas fa-arrow-left lp-submit-arrow"></i>
+              </button>
+
+              <div class="lp-auth-foot">
+                <i class="fas fa-circle-info"></i>
+                <span>يتم التوجيه برمجياً ومباشرةً إلى نموذج «بيانات المشروع والمنافسة»</span>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- شريط الإحصائيات والأرقام -->
+      <section class="lp-stats" aria-label="مؤشرات المنصة">
+        <div class="lp-container">
+          <div class="lp-stats-inner">
+            <div class="lp-stat">
+              <div class="lp-stat-icon"><i class="fas fa-layer-group"></i></div>
+              <div><strong>6</strong><span>أنواع مشاريع هندسية معتمدة</span></div>
+            </div>
+            <div class="lp-stat">
+              <div class="lp-stat-icon"><i class="fas fa-file-export"></i></div>
+              <div><strong>6</strong><span>مخرجات رسمية جاهزة للطرح</span></div>
+            </div>
+            <div class="lp-stat">
+              <div class="lp-stat-icon"><i class="fas fa-percent"></i></div>
+              <div><strong>15%</strong><span>احتساب آلي لضريبة القيمة المضافة</span></div>
+            </div>
+            <div class="lp-stat">
+              <div class="lp-stat-icon"><i class="fas fa-spell-check"></i></div>
+              <div><strong>آلي</strong><span>تفقيط المبالغ كتابةً بالعربية</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- بطاقات أنواع المشاريع الهندسية -->
+      <section class="lp-section" id="lp-projects">
+        <div class="lp-container">
+          <div class="lp-section-head lp-reveal">
+            <span class="lp-kicker">شمولية التغطية الهندسية</span>
+            <h2>منصة متكاملة لإعداد كراسات طرح كافة مشاريع الإدارة</h2>
+            <p>دليل بنود ومواصفات قابل للتخصيص والتوسع لكل قطاع، يربط المخططات بجداول الكميات والأسعار وكراسة الشروط الرسمية.</p>
+          </div>
+
+          <div class="lp-types-grid">
+            <article class="lp-type-card lp-reveal">
+              <div class="lp-type-top"><div class="lp-type-icon"><i class="fas fa-tree"></i></div><span class="lp-type-code">HUM</span></div>
+              <h3>مشاريع الأنسنة</h3>
+              <p>تحسين المشهد الحضري: تطوير الممشيات، الساحات العامة، الحدائق، الإنترلوك والبردورات، الأثاث الحضري والتشجير وشبكات الري الذكية.</p>
+              <div class="lp-type-tags"><span>أرصفة وممشيات</span><span>تشجير وري</span><span>أثاث ذكي</span></div>
+            </article>
+
+            <article class="lp-type-card lp-reveal">
+              <div class="lp-type-top"><div class="lp-type-icon"><i class="fas fa-road"></i></div><span class="lp-type-code">RDS</span></div>
+              <h3>مشاريع الطرق والسلامة</h3>
+              <p>الأعمال الترابية والتسويات، طبقات الأساس الحجري، السفلتة والطبقات السطحية، واللوحات الإرشادية والدهانات الحرارية ووسائل السلامة.</p>
+              <div class="lp-type-tags"><span>أعمال ترابية</span><span>طبقات إسفلت</span><span>سلامة مرورية</span></div>
+            </article>
+
+            <article class="lp-type-card lp-reveal">
+              <div class="lp-type-top"><div class="lp-type-icon"><i class="fas fa-cloud-showers-heavy"></i></div><span class="lp-type-code">SWD</span></div>
+              <h3>تصريف مياه الأمطار والسيول</h3>
+              <p>تمديد خطوط وشبكات الأنابيب، المطابق وغرف التهدئة والتفتيش، مصائد مياه الأمطار، محطات الرفع وقنوات درء أخطار السيول وتصريفها.</p>
+              <div class="lp-type-tags"><span>خطوط ومواسير</span><span>مناهل وغرف تفتيش</span><span>محطات رفع</span></div>
+            </article>
+
+            <article class="lp-type-card lp-reveal">
+              <div class="lp-type-top"><div class="lp-type-icon"><i class="fas fa-archway"></i></div><span class="lp-type-code">TNL</span></div>
+              <h3>مشاريع الأنفاق</h3>
+              <p>أعمال الحفر العميق وتدعيم الجوانب ونزح المياه الجوفية، الخرسانات المسلحة والعزل المائي، وأنظمة التهوية والمكافحة والإنارة المتقدمة.</p>
+              <div class="lp-type-tags"><span>حفر عميق وتدعيم</span><span>خرسانة وعزل</span><span>تشغيل وسلامة</span></div>
+            </article>
+
+            <article class="lp-type-card lp-reveal">
+              <div class="lp-type-top"><div class="lp-type-icon"><i class="fas fa-bridge"></i></div><span class="lp-type-code">BRG</span></div>
+              <h3>مشاريع الجسور والكباري</h3>
+              <p>الخوازيق والأساسات العميقة، الأعمدة والبلاطات والكمرات مسبقة الإجهاد، فواصل التمدد والمساند المطاطية وحواجز الحماية الخرسانية.</p>
+              <div class="lp-type-tags"><span>خوازيق وأساسات</span><span>كمرات وبلاطات</span><span>فواصل ومساند</span></div>
+            </article>
+
+            <article class="lp-type-card lp-reveal">
+              <div class="lp-type-top"><div class="lp-type-icon"><i class="fas fa-map-location-dot"></i></div><span class="lp-type-code">PLN</span></div>
+              <h3>المخططات الخاصة والتطوير</h3>
+              <p>تجهيز وتطوير البنية التحتية للمخططات المعتمدة: أعمال التسوية الشاملة، شبكات الخدمات والمرافق، والسفلتة والإنارة وعناصر التشجير.</p>
+              <div class="lp-type-tags"><span>تسوية مخططات</span><span>شبكات مرافق</span><span>سفلتة وإنارة</span></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- مراحل العمل -->
+      <section class="lp-section" id="lp-workflow">
+        <div class="lp-container">
+          <div class="lp-section-head lp-reveal">
+            <span class="lp-kicker">آلية العمل المتكاملة</span>
+            <h2>من البيانات الهندسية إلى وثائق طرح معتمدة في 4 مراحل</h2>
+            <p>مسار عمل رقمي ذكي يضمن الدقة الرياضية، التفقيط التلقائي، والاتساق مع المواصفات واللوائح المعمول بها.</p>
+          </div>
+
+          <div class="lp-flow">
+            <div class="lp-flow-step lp-reveal">
+              <div class="lp-flow-num"><i class="fas fa-folder-open"></i><b>1</b></div>
+              <h3>بيانات المشروع والمنافسة</h3>
+              <p>إدخال اسم المشروع، رقم المنافسة، البلدية، موقع التنفيذ، المدة، ونطاق العمل المعتمد.</p>
+            </div>
+            <div class="lp-flow-step lp-reveal">
+              <div class="lp-flow-num"><i class="fas fa-layer-group"></i><b>2</b></div>
+              <h3>بناء جدول الكميات (BOQ)</h3>
+              <p>اختيار البنود من الدليل الهندسي المعتمد، تحديد المواصفات، الكميات، ومصدر المواد.</p>
+            </div>
+            <div class="lp-flow-step lp-reveal">
+              <div class="lp-flow-num"><i class="fas fa-calculator"></i><b>3</b></div>
+              <h3>التسعير والتفقيط والضريبة</h3>
+              <p>احتساب التكاليف والضريبة (15%) ونسبة المحتوى المحلي مع تفقيط المبلغ كتابةً بالعربية.</p>
+            </div>
+            <div class="lp-flow-step lp-reveal">
+              <div class="lp-flow-num"><i class="fas fa-file-export"></i><b>4</b></div>
+              <h3>إخراج كراسات الطرح</h3>
+              <p>تصدير 6 وثائق رسمية بصيغ Excel و PDF و Word جاهزة للاعتماد أو الطرح في منصة اعتماد.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- مخرجات الطرح -->
+      <section class="lp-section" id="lp-outputs">
+        <div class="lp-container">
+          <div class="lp-section-head lp-reveal">
+            <span class="lp-kicker">المخرجات الرسمية</span>
+            <h2>6 وثائق مهنية جاهزة للاعتماد والطرح</h2>
+            <p>نسخ مسعّرة للاعتماد الداخلي ونسخ غير مسعّرة لطرح المنافسة على المقاولين بالهوية الرسمية.</p>
+          </div>
+
+          <div class="lp-outputs">
+            <div class="lp-output lp-reveal"><div class="lp-output-icon xls"><i class="fas fa-file-excel"></i></div><div><h4>جدول الكميات Excel مسعّر</h4><span>للمراجعة والاعتماد الداخلي</span></div></div>
+            <div class="lp-output lp-reveal"><div class="lp-output-icon xls"><i class="fas fa-table"></i></div><div><h4>جدول الكميات Excel للطرح</h4><span>غير مسعّر للمقاولين</span></div></div>
+            <div class="lp-output lp-reveal"><div class="lp-output-icon pdf"><i class="fas fa-file-pdf"></i></div><div><h4>جدول الكميات PDF مسعّر</h4><span>وثيقة اعتماد مع التواقيع</span></div></div>
+            <div class="lp-output lp-reveal"><div class="lp-output-icon pdf"><i class="fas fa-print"></i></div><div><h4>جدول الكميات PDF للطرح</h4><span>نسخة جاهزة لمنصة اعتماد</span></div></div>
+            <div class="lp-output lp-reveal"><div class="lp-output-icon doc"><i class="fas fa-file-word"></i></div><div><h4>كراسة الشروط والمواصفات Word</h4><span>مستند تحريري كامل بالعقد</span></div></div>
+            <div class="lp-output lp-reveal"><div class="lp-output-icon pdf"><i class="fas fa-book"></i></div><div><h4>كراسة الشروط والمواصفات PDF</h4><span>نسخة رسمية للطباعة والتوقيع</span></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- دعوة للبدء -->
+      <section class="lp-cta">
+        <div class="lp-container">
+          <div class="lp-cta-inner lp-reveal">
+            <div>
+              <h2>جاهز لتجهيز كراسة الطرح لمشروعك القادم؟</h2>
+              <p>سجّل الدخول الآن للبدء في تعبئة بيانات المشروع وبناء جدول الكميات المسعّر.</p>
+            </div>
+            <button type="button" class="lp-cta-btn" id="lpCtaLoginBtn" data-lp-focus-login>
+              <i class="fas fa-arrow-up"></i> الانتقال إلى بطاقة الدخول
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="lp-footer">
+      <div class="lp-container lp-footer-inner">
+        <span>© <span id="lpYear"></span> <strong>أمانة المنطقة الشرقية</strong> — الإدارة العامة للإشراف</span>
+        <span>النظام المتكامل لإعداد وتسعير كراسات الطرح</span>
+      </div>
+    </footer>
+  </div>
 
   <!-- Top Header with Official Governmental Identity -->
   <header class="app-header">
     <div class="header-container">
       <div class="brand-section">
-        <div class="emblem-icon">
-          <i class="fas fa-landmark"></i>
+        <div class="emblem-icon" style="overflow:hidden; padding: 4px;">
+          <img src="img/amana-logo.png" alt="أمانة المنطقة الشرقية" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
         </div>
         <div class="brand-titles">
-          <h1>
+          <div class="brand-title-main">
             أمانة المنطقة الشرقية
-            <span class="badge-tag"><i class="fas fa-tree"></i> مشاريع الأنسنة</span>
-          </h1>
-          <p>الإدارة العامة للإشراف | النظام المتكامل لإعداد وتسعير جداول الكميات (BOQ) وإصدار كراسات الطرح</p>
+            <span class="badge-tag"><i class="fas fa-layer-group"></i> منصة كراسات الطرح</span>
+          </div>
+          <p>الإدارة العامة للإشراف | النظام المتكامل لإعداد وتسعير كراسات الطرح وجداول الكميات (BOQ)</p>
         </div>
       </div>
 
       <div class="header-actions">
-        <div class="quick-stats-strip" style="background: rgba(255,255,255,0.12); color:#fff; border-color: rgba(255,255,255,0.2);">
+        <div class="quick-stats-strip"
+          style="background: rgba(255,255,255,0.12); color:#fff; border-color: rgba(255,255,255,0.2);">
           <div class="quick-stat-item">
             <span style="opacity: 0.85;">البنود:</span>
             <strong id="topBarItemsCount" style="color:#fff;">0</strong>
@@ -53,6 +417,11 @@
 
         <button class="btn btn-gold btn-finish-project" title="توليد المخرجات وجداول الكميات">
           <i class="fas fa-file-export"></i> إنهاء المشروع والمخرجات
+        </button>
+
+        <span class="header-user-chip" id="headerUserChip"></span>
+        <button class="btn btn-logout btn-sm" id="logoutBtn" title="تسجيل الخروج">
+          <i class="fas fa-right-from-bracket"></i> خروج
         </button>
       </div>
     </div>
@@ -78,7 +447,8 @@
 
       <div style="display: flex; gap: 0.5rem; align-items: center;">
         <span style="font-size: 0.82rem; color: var(--text-muted);">المشروع النشط:</span>
-        <span id="headerProjectName" style="font-size: 0.88rem; font-weight: 800; color: var(--primary); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <span id="headerProjectName"
+          style="font-size: 0.88rem; font-weight: 800; color: var(--primary); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
           مشروع جديد
         </span>
       </div>
@@ -150,8 +520,8 @@
               <!-- مدة التنفيذ بالأشهر -->
               <div class="form-group">
                 <label class="form-label">مدة التنفيذ (بالأشهر) <span class="required">*</span></label>
-                <input type="number" min="1" max="60" class="form-control" id="proj_durationMonths" name="durationMonths" required
-                  placeholder="6">
+                <input type="number" min="1" max="60" class="form-control" id="proj_durationMonths"
+                  name="durationMonths" required placeholder="6">
               </div>
 
               <!-- اسم المهندس المشرف -->
@@ -170,7 +540,8 @@
               <!-- نسبة ضريبة القيمة المضافة -->
               <div class="form-group">
                 <label class="form-label">نسبة ضريبة القيمة المضافة (%)</label>
-                <input type="number" class="form-control" id="proj_vatRate" name="vatRate" value="15" readonly style="background:#f8fafc;">
+                <input type="number" class="form-control" id="proj_vatRate" name="vatRate" value="15" readonly
+                  style="background:#f8fafc;">
               </div>
             </div>
 
@@ -198,7 +569,7 @@
     <!-- ==================== الشاشة الثانية: بناء جدول الكميات ==================== -->
     <section id="screenBoqBuilder" class="screen-panel">
       <div class="builder-layout">
-        
+
         <!-- الشريط الجانبي: دليل بنود الأنسنة المعتمد -->
         <aside class="catalog-drawer">
           <div class="catalog-header">
@@ -214,8 +585,8 @@
           </div>
 
           <div class="catalog-search-box">
-            <input type="text" id="catalogSearchInput" class="form-control" style="font-size: 0.85rem; padding: 0.5rem 0.75rem;"
-              placeholder="ابحث برقم البند أو الوصف...">
+            <input type="text" id="catalogSearchInput" class="form-control"
+              style="font-size: 0.85rem; padding: 0.5rem 0.75rem;" placeholder="ابحث برقم البند أو الوصف...">
           </div>
 
           <div id="catalogDrawerList" class="catalog-list">
@@ -223,7 +594,8 @@
           </div>
 
           <div style="padding: 0.75rem; border-top: 1px solid var(--border); background: #f8fafc; text-align: center;">
-            <button class="btn btn-secondary btn-sm" style="width: 100%;" onclick="BOQApp.switchScreen('screenAdminPanel')">
+            <button class="btn btn-secondary btn-sm" style="width: 100%;"
+              onclick="BOQApp.switchScreen('screenAdminPanel')">
               <i class="fas fa-sliders-h"></i> تخصيص وإدارة بنود الدليل
             </button>
           </div>
@@ -293,7 +665,8 @@
               </div>
             </div>
 
-            <div style="margin-top: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div
+              style="margin-top: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
               <button class="btn btn-secondary" onclick="BOQApp.switchScreen('screenProjectInfo')">
                 <i class="fas fa-arrow-right"></i> تعديل بيانات المشروع
               </button>
@@ -354,9 +727,12 @@
       </div>
 
       <div class="modal-body">
-        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
-          <div style="font-weight: 800; font-size: 1.05rem; color: var(--primary);" id="exportModalProjectTitle">اسم المشروع</div>
-          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" id="exportModalItemsSummary">0 بنود مدرجة</div>
+        <div
+          style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+          <div style="font-weight: 800; font-size: 1.05rem; color: var(--primary);" id="exportModalProjectTitle">اسم
+            المشروع</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" id="exportModalItemsSummary">0
+            بنود مدرجة</div>
         </div>
 
         <div class="export-grid">
@@ -369,7 +745,8 @@
               </div>
               <div class="export-details">
                 <h4>جدول الكميات Excel (نسخة مسعرة)</h4>
-                <p>ملف إكسل كامل يحتوي على الكميات والأسعار الإفرادية والإجمالية والتفقيط والضريبة 15% للمراجعة والاعتماد الداخلي.</p>
+                <p>ملف إكسل كامل يحتوي على الكميات والأسعار الإفرادية والإجمالية والتفقيط والضريبة 15% للمراجعة
+                  والاعتماد الداخلي.</p>
                 <span class="export-badge badge-priced">للإدارة والأمانة</span>
               </div>
             </div>
@@ -386,7 +763,8 @@
               </div>
               <div class="export-details">
                 <h4>جدول الكميات Excel (نسخة الطرح غير مسعرة)</h4>
-                <p>ملف إكسل لطرح المنافسة خالي من الأسعار، جاهز لتعبئة المقاولين المتقدمين بالعطاءات مع خانات التوقيع.</p>
+                <p>ملف إكسل لطرح المنافسة خالي من الأسعار، جاهز لتعبئة المقاولين المتقدمين بالعطاءات مع خانات التوقيع.
+                </p>
                 <span class="export-badge badge-unpriced">للمتنافسين والمقاولين</span>
               </div>
             </div>
@@ -403,7 +781,8 @@
               </div>
               <div class="export-details">
                 <h4>جدول الكميات PDF (نسخة مسعرة رسمية)</h4>
-                <p>مستند رسمي منسق بالهوية البصرية لأمانة المنطقة الشرقية متضمناً الأسعار والتفقيط وخانات اعتماد المهندس والمدير العام.</p>
+                <p>مستند رسمي منسق بالهوية البصرية لأمانة المنطقة الشرقية متضمناً الأسعار والتفقيط وخانات اعتماد المهندس
+                  والمدير العام.</p>
                 <span class="export-badge badge-priced">وثيقة اعتماد رسمية</span>
               </div>
             </div>
@@ -420,7 +799,8 @@
               </div>
               <div class="export-details">
                 <h4>جدول الكميات PDF (نسخة الطرح غير مسعرة)</h4>
-                <p>كراسة جداول كميات رسمية مجهزة للطرح في منصة اعتماد، تحتوي على الشروط وتعهد المقاول وخانات التقديم.</p>
+                <p>كراسة جداول كميات رسمية مجهزة للطرح في منصة اعتماد، تحتوي على الشروط وتعهد المقاول وخانات التقديم.
+                </p>
                 <span class="export-badge badge-unpriced">نسخة منصة اعتماد</span>
               </div>
             </div>
@@ -437,7 +817,8 @@
               </div>
               <div class="export-details">
                 <h4>كراسة الشروط والمواصفات (Word Docx)</h4>
-                <p>كراسة كاملة ومحررة تم توليدها بالتعويض التلقائي لبيانات المشروع والمدة ونطاق العمل والمواصفات قابلة للتعديل ببرنامج Word.</p>
+                <p>كراسة كاملة ومحررة تم توليدها بالتعويض التلقائي لبيانات المشروع والمدة ونطاق العمل والمواصفات قابلة
+                  للتعديل ببرنامج Word.</p>
                 <span class="export-badge badge-doc">مستند تحريري Word</span>
               </div>
             </div>
@@ -478,7 +859,7 @@
       <div class="modal-body">
         <form id="adminItemForm">
           <input type="hidden" id="adminItemId">
-          
+
           <div class="form-group" style="margin-bottom: 1rem;">
             <label class="form-label">القسم التابع له البند <span class="required">*</span></label>
             <select class="form-select" id="adminItemSectionSelect" required>
@@ -499,12 +880,14 @@
 
           <div class="form-group" style="margin-bottom: 1rem;">
             <label class="form-label">اسم البند <span class="required">*</span></label>
-            <input type="text" class="form-control" id="adminItemName" required placeholder="مثال: توريد وتركيب بلاط إنترلوك ملون...">
+            <input type="text" class="form-control" id="adminItemName" required
+              placeholder="مثال: توريد وتركيب بلاط إنترلوك ملون...">
           </div>
 
           <div class="form-group" style="margin-bottom: 1rem;">
             <label class="form-label">الوصف التفصيلي للبند</label>
-            <textarea class="form-control" id="adminItemDesc" rows="2" placeholder="وصف الأعمال التمهيدية والتنفيذية..."></textarea>
+            <textarea class="form-control" id="adminItemDesc" rows="2"
+              placeholder="وصف الأعمال التمهيدية والتنفيذية..."></textarea>
           </div>
 
           <div class="form-grid-3" style="margin-bottom: 1rem;">
@@ -530,7 +913,8 @@
               <span>خيارات المواصفات المتغيرة للقائمة المنسدلة (Dropdown Options)</span>
               <span class="form-help">ضع كل خيار في سطر منفصل</span>
             </label>
-            <textarea class="form-control" id="adminItemSpecs" rows="3" placeholder="مواصفة 1...&#10;مواصفة 2...&#10;مواصفة 3..."></textarea>
+            <textarea class="form-control" id="adminItemSpecs" rows="3"
+              placeholder="مواصفة 1...&#10;مواصفة 2...&#10;مواصفة 3..."></textarea>
           </div>
 
           <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
@@ -555,7 +939,8 @@
 
           <div class="form-group" style="margin-bottom: 1rem;">
             <label class="form-label">اسم القسم الرئيسي <span class="required">*</span></label>
-            <input type="text" class="form-control" id="adminSecName" required placeholder="مثال: الأعمال التجميلية والنوافير">
+            <input type="text" class="form-control" id="adminSecName" required
+              placeholder="مثال: الأعمال التجميلية والنوافير">
           </div>
 
           <div class="form-group" style="margin-bottom: 1rem;">
@@ -565,7 +950,8 @@
 
           <div class="form-group" style="margin-bottom: 1.5rem;">
             <label class="form-label">وصف مختصر للقسم</label>
-            <textarea class="form-control" id="adminSecDesc" rows="2" placeholder="وصف مجال الأعمال المندرجة..."></textarea>
+            <textarea class="form-control" id="adminSecDesc" rows="2"
+              placeholder="وصف مجال الأعمال المندرجة..."></textarea>
           </div>
 
           <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
@@ -583,11 +969,14 @@
   <script src="js/boq.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/export.js"></script>
+  <script src="js/landing.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       BOQApp.init();
       AdminPanel.init();
+      LandingAuth.init();
     });
   </script>
 </body>
+
 </html>
