@@ -29,6 +29,25 @@ const BOQApp = (() => {
     if (savedProject) {
       try {
         projectInfo = JSON.parse(savedProject);
+        if (!projectInfo.projectName || 
+            projectInfo.projectName.includes("تطوير وتحسين شبكة الطرق") ||
+            projectInfo.projectName.includes("مشروع أنسنة وتطوير ممشى")) {
+          projectInfo.projectName = DEFAULT_PROJECT_INFO.projectName;
+        }
+        if (!projectInfo.engineerName || projectInfo.engineerName.includes("عبد الله بن خالد")) {
+          projectInfo.engineerName = DEFAULT_PROJECT_INFO.engineerName;
+          projectInfo.engineerTitle = DEFAULT_PROJECT_INFO.engineerTitle;
+        }
+        if (!projectInfo.deliveryLocation || projectInfo.deliveryLocation.includes("الإدارة العامة للإشراف")) {
+          projectInfo.deliveryLocation = DEFAULT_PROJECT_INFO.deliveryLocation;
+        }
+        if (!projectInfo.scopeOfWork || projectInfo.scopeOfWork.includes("شبكات الطرق")) {
+          projectInfo.scopeOfWork = DEFAULT_PROJECT_INFO.scopeOfWork;
+        }
+        if (!projectInfo.excludedWork || projectInfo.excludedWork.includes("الجهد الفائق")) {
+          projectInfo.excludedWork = DEFAULT_PROJECT_INFO.excludedWork;
+        }
+        localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(projectInfo));
       } catch (e) {
         projectInfo = { ...DEFAULT_PROJECT_INFO };
       }
@@ -36,9 +55,12 @@ const BOQApp = (() => {
       projectInfo = { ...DEFAULT_PROJECT_INFO };
     }
 
+    const BOQ_DATA_VERSION = "2026_PARKS_TENDER_V1";
+    const currentVer = localStorage.getItem("EPM_BOQ_DATA_VERSION");
+
     // 2. Catalog
     const savedCatalog = localStorage.getItem(STORAGE_KEYS.CATALOG);
-    if (savedCatalog) {
+    if (savedCatalog && currentVer === BOQ_DATA_VERSION) {
       try {
         catalog = JSON.parse(savedCatalog);
       } catch (e) {
@@ -46,11 +68,12 @@ const BOQApp = (() => {
       }
     } else {
       catalog = JSON.parse(JSON.stringify(DEFAULT_BOQ_CATALOG));
+      localStorage.setItem(STORAGE_KEYS.CATALOG, JSON.stringify(catalog));
     }
 
     // 3. BOQ Items
     const savedBoq = localStorage.getItem(STORAGE_KEYS.BOQ_ITEMS);
-    if (savedBoq) {
+    if (savedBoq && currentVer === BOQ_DATA_VERSION) {
       try {
         boqItems = JSON.parse(savedBoq);
       } catch (e) {
@@ -58,6 +81,8 @@ const BOQApp = (() => {
       }
     } else {
       boqItems = JSON.parse(JSON.stringify(DEFAULT_INITIAL_BOQ));
+      localStorage.setItem(STORAGE_KEYS.BOQ_ITEMS, JSON.stringify(boqItems));
+      localStorage.setItem("EPM_BOQ_DATA_VERSION", BOQ_DATA_VERSION);
     }
   }
 
@@ -95,6 +120,7 @@ const BOQApp = (() => {
           projectInfo[field] = e.target.value;
           localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(projectInfo));
           updateHeaderSummary();
+          if (field === "tenderCost") updateTenderCostHint();
         }
       });
     }
@@ -159,9 +185,14 @@ const BOQApp = (() => {
 
   function fillProjectForm() {
     const fields = [
-      "projectName", "projectNumber", "municipality", "department",
-      "location", "durationMonths", "engineerName", "date",
-      "scopeOfWork", "vatRate"
+      "sector", "projectName", "projectNumber", "versionNumber", "releaseDate", "releaseCity",
+      "tenderCost", "paymentMethod", "municipality", "department",
+      "region", "city", "district", "location", "coordinates", "durationMonths",
+      "engineerName", "engineerTitle", "engineerPhone", "engineerEmail", "deliveryLocation",
+      "dateConfirmParticipation", "dateInquiries", "dateInquiryResponse", "dateSiteVisit",
+      "dateSubmission", "dateOpening", "dateAward", "dateCommencement",
+      "bidBondPercent", "bidValidityDays", "finalBondPercent", "submissionMethod", "delayPenaltyMax",
+      "scopeOfWork", "excludedWork", "vatRate"
     ];
 
     fields.forEach(field => {
@@ -170,6 +201,44 @@ const BOQApp = (() => {
         el.value = projectInfo[field];
       }
     });
+
+    updateSectorCardVisuals();
+    updateTenderCostHint();
+  }
+
+  function selectSector(sectorKey) {
+    projectInfo.sector = sectorKey;
+    const hiddenInput = document.getElementById("proj_sector");
+    if (hiddenInput) hiddenInput.value = sectorKey;
+    localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(projectInfo));
+    updateSectorCardVisuals();
+    
+    const titles = {
+      roads: "مشاريع الطرق والسلامة المرورية",
+      buildings: "مشاريع المباني والمرافق البلدية",
+      stormwater: "مشاريع تصريف مياه الأمطار ودرء أخطار السيول",
+      bridges: "مشاريع الجسور والأنفاق الإنشائية"
+    };
+    showToast(`تم تعيين قطاع المنافسة: ${titles[sectorKey] || sectorKey}`);
+  }
+
+  function updateSectorCardVisuals() {
+    const currentSector = projectInfo.sector || "roads";
+    document.querySelectorAll(".sector-card").forEach(card => {
+      const sec = card.dataset.sector;
+      card.classList.toggle("active", sec === currentSector);
+    });
+  }
+
+  function updateTenderCostHint() {
+    const hint = document.getElementById("tenderCostTafqeetHint");
+    if (!hint) return;
+    const cost = Number(projectInfo.tenderCost || 0);
+    if (cost <= 0) {
+      hint.textContent = "مجاناً بدون مقابل مالي";
+    } else if (typeof Tafqeet !== "undefined") {
+      hint.textContent = Tafqeet.convertCurrency(cost);
+    }
   }
 
   // Render Catalog Drawer Items
@@ -699,6 +768,7 @@ const BOQApp = (() => {
     renderBoqTable,
     openExportModal,
     closeExportModal,
+    selectSector,
     showToast
   };
 

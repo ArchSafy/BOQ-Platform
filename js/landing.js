@@ -25,6 +25,8 @@ const LandingAuth = (() => {
       togglePass: document.getElementById("lpTogglePassword"),
       capsHint: document.getElementById("lpCapsHint"),
       submit: document.getElementById("lpSubmitBtn"),
+      forgotBtn: document.getElementById("lpForgotPass"),
+      registerBtn: document.getElementById("lpRegisterBtn"),
       logoutBtn: document.getElementById("logoutBtn"),
       userChip: document.getElementById("headerUserChip"),
       year: document.getElementById("lpYear")
@@ -118,6 +120,30 @@ const LandingAuth = (() => {
 
     if (els.logoutBtn) {
       els.logoutBtn.addEventListener("click", logout);
+    }
+
+    if (els.forgotBtn) {
+      els.forgotBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const msg = "لاستعادة أو إعادة تعيين كلمة المرور، يرجى التواصل مع الدعم الفني وتقنية المعلومات بالإدارة العامة للإشراف.";
+        if (typeof BOQApp !== "undefined" && typeof BOQApp.showToast === "function") {
+          BOQApp.showToast(msg);
+        } else {
+          alert(msg);
+        }
+      });
+    }
+
+    if (els.registerBtn) {
+      els.registerBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const msg = "تسجيل الحسابات الجديدة مخصص لمهندسي ومنسوبي الأمانة عبر بوابة الدخول الموحدة.";
+        if (typeof BOQApp !== "undefined" && typeof BOQApp.showToast === "function") {
+          BOQApp.showToast(msg);
+        } else {
+          alert(msg);
+        }
+      });
     }
   }
 
@@ -236,7 +262,7 @@ const LandingAuth = (() => {
     if (!els.submit) return;
     els.submit.classList.remove("is-loading");
     const label = els.submit.querySelector(".lp-submit-label");
-    if (label) label.textContent = "تسجيل الدخول لبدء مشروع جديد";
+    if (label) label.textContent = "تسجيل الدخول";
   }
 
   /* ---------------- Scroll reveal ---------------- */

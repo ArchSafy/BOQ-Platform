@@ -353,17 +353,55 @@ const ExportSystem = (() => {
     const sections = BOQApp.getCatalog();
     const summary = BOQApp.calculateSummary();
 
+    const sectorTitles = {
+      roads: "مشاريع الطرق والسلامة المرورية",
+      buildings: "مشاريع المباني والمرافق البلدية",
+      stormwater: "مشاريع تصريف مياه الأمطار ودرء السيول",
+      bridges: "مشاريع الجسور والأنفاق الإنشائية"
+    };
+
     return {
-      title: `كراسة الشروط والمواصفات الفنية العامة والخاصة`,
-      projectName: p.projectName || "مشروع أنسنة وتطوير ممشى وحديقة",
-      projectNumber: p.projectNumber || "EPM-HUM-2026-084",
+      title: `نموذج كراسة الشروط والمواصفات (إنشاءات عامة) - المعتمد بموجب قرار وزير المالية رقم (1440)`,
+      sectorTitle: sectorTitles[p.sector] || "إنشاءات عامة",
+      projectName: p.projectName || "مشروع إنشاء حدائق وساحات بمدينة الدمام م 4",
+      projectNumber: p.projectNumber || "EPM-PRK-2026-004",
+      versionNumber: p.versionNumber || "النسخة الثانية",
+      releaseDate: p.releaseDate || new Date().toISOString().split("T")[0],
+      releaseCity: p.releaseCity || "الدمام",
+      tenderCost: p.tenderCost || 0,
+      tenderCostWords: (p.tenderCost > 0 && typeof Tafqeet !== "undefined") ? Tafqeet.convertCurrency(p.tenderCost) : "مجاناً بدون مقابل",
+      paymentMethod: p.paymentMethod || "نظام سداد",
       municipality: p.municipality || "أمانة المنطقة الشرقية",
-      department: p.department || "الإدارة العامة للإشراف - إدارة مشاريع الأنسنة",
-      location: p.location || "المنطقة الشرقية",
-      duration: `${p.durationMonths || 6} أشهر`,
-      engineerName: p.engineerName || "مهندس الإشراف المعتمد",
-      date: p.date || "2026-10-15",
-      scopeOfWork: p.scopeOfWork || "تطوير مسارات المشاة، التشجير، الإنارة الذكية والفرش الحضري وفق معايير الأنسنة المعتمدة.",
+      department: p.department || "الإدارة العامة للإشراف - إدارة الإشراف على المباني والمرافق البلدية",
+      region: p.region || "المنطقة الشرقية",
+      city: p.city || "مدينة الدمام",
+      district: p.district || "مدينة الدمام - م 4",
+      location: p.location || "مدينة الدمام - المواقع والساحات المحددة ببلدية الدمام م 4",
+      coordinates: p.coordinates || "26.4207° N, 50.0888° E",
+      duration: `${p.durationMonths || 12} شهراً`,
+      engineerName: p.engineerName || "مهندس سعيد محمد بالحداد",
+      engineerTitle: p.engineerTitle || "مدير إدارة الإشراف على المباني والمرافق البلدية",
+      engineerPhone: p.engineerPhone || "013-829-0000",
+      engineerEmail: p.engineerEmail || "supervision@amana-md.gov.sa",
+      deliveryLocation: p.deliveryLocation || "مقر أمانة المنطقة الشرقية - الطابق الثالث - مكتب لجنة استلام العروض",
+      
+      // المواعيد
+      dateConfirmParticipation: p.dateConfirmParticipation || "2026-11-05",
+      dateInquiries: p.dateInquiries || "2026-11-12",
+      dateInquiryResponse: p.dateInquiryResponse || "2026-11-19",
+      dateSiteVisit: p.dateSiteVisit || "2026-11-15",
+      dateSubmission: p.dateSubmission || "2026-12-01",
+      dateOpening: p.dateOpening || "2026-12-02",
+      dateCommencement: p.dateCommencement || "2027-01-01",
+
+      // الشروط والضمانات
+      bidBondPercent: `${p.bidBondPercent || 1}%`,
+      bidValidityDays: `${p.bidValidityDays || 90} يوماً`,
+      finalBondPercent: `${p.finalBondPercent || 5}%`,
+      submissionMethod: p.submissionMethod === "two_envelopes" ? "ملفين إلكترونيين منفصلين (عرض فني + عرض مالي)" : "ملف إلكتروني موحد",
+      delayPenaltyMax: `${p.delayPenaltyMax || 10}%`,
+      scopeOfWork: p.scopeOfWork || "تنفيذ وإنشاء حدائق عامة وساحات بلدية ومناطق ترفيهية متكاملة بمدينة الدمام (م 4)، شاملة أعمال التسوية وتجهيز الموقع، شبكات الري الأوتوماتيكية الذكية والخزانات ومحطات الضخ، زراعة المسطحات الخضراء والأشجار، ممرات المشاة، أعمدة الإنارة التجميلية، وألعاب الأطفال والمظلات والمقاعد.",
+      excludedWork: p.excludedWork || "أعمال إيصال التغذية الكهربائية للعدادات الرئيسية وأعمال ترحيل خطوط الخدمات القائمة خارج حدود المواقع.",
       grandTotal: formatMoney(summary.grandTotal),
       grandTotalWords: Tafqeet.convertCurrency(summary.grandTotal),
       sectionsCount: sections.length,
