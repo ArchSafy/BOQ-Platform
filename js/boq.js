@@ -8,7 +8,9 @@ const BOQApp = (() => {
   const STORAGE_KEYS = {
     PROJECT: "EPM_BOQ_PROJECT_DATA_V1",
     CATALOG: "EPM_BOQ_CATALOG_DATA_V1",
-    BOQ_ITEMS: "EPM_BOQ_ITEMS_LIST_V1"
+    BOQ_ITEMS: "EPM_BOQ_ITEMS_LIST_V1",
+    ROADS_CATALOG: "EPM_BOQ_ROADS_CATALOG_V1",
+    ROADS_BOQ_ITEMS: "EPM_BOQ_ROADS_ITEMS_V1"
   };
 
   // State
@@ -23,29 +25,116 @@ const BOQApp = (() => {
     renderAll();
   }
 
+  function isRoadsSector(sec = projectInfo.sector) {
+    return sec === "roads";
+  }
+
+  function loadSectorCatalogAndItems(sectorKey) {
+    const isRoads = isRoadsSector(sectorKey);
+    const BOQ_DATA_VERSION = "2026_PARKS_EMPTY_START_V2";
+    const ROADS_DATA_VERSION = "2026_ROADS_EMPTY_START_V2";
+
+    if (isRoads) {
+      const currentRoadsVer = localStorage.getItem("EPM_ROADS_DATA_VERSION");
+      const defaultRoadsCatalog = typeof ROADS_BOQ_CATALOG !== "undefined" ? ROADS_BOQ_CATALOG : DEFAULT_BOQ_CATALOG;
+
+      const savedRoadsCat = localStorage.getItem(STORAGE_KEYS.ROADS_CATALOG);
+      if (savedRoadsCat && currentRoadsVer === ROADS_DATA_VERSION) {
+        try {
+          catalog = JSON.parse(savedRoadsCat);
+        } catch (e) {
+          catalog = JSON.parse(JSON.stringify(defaultRoadsCatalog));
+        }
+      } else {
+        catalog = JSON.parse(JSON.stringify(defaultRoadsCatalog));
+        localStorage.setItem(STORAGE_KEYS.ROADS_CATALOG, JSON.stringify(catalog));
+      }
+
+      const savedRoadsBoq = localStorage.getItem(STORAGE_KEYS.ROADS_BOQ_ITEMS);
+      if (savedRoadsBoq && currentRoadsVer === ROADS_DATA_VERSION) {
+        try {
+          boqItems = JSON.parse(savedRoadsBoq);
+        } catch (e) {
+          boqItems = [];
+        }
+      } else {
+        boqItems = [];
+        localStorage.setItem(STORAGE_KEYS.ROADS_BOQ_ITEMS, JSON.stringify(boqItems));
+        localStorage.setItem("EPM_ROADS_DATA_VERSION", ROADS_DATA_VERSION);
+      }
+    } else {
+      const currentVer = localStorage.getItem("EPM_BOQ_DATA_VERSION");
+
+      const savedCatalog = localStorage.getItem(STORAGE_KEYS.CATALOG);
+      if (savedCatalog && currentVer === BOQ_DATA_VERSION) {
+        try {
+          catalog = JSON.parse(savedCatalog);
+        } catch (e) {
+          catalog = JSON.parse(JSON.stringify(DEFAULT_BOQ_CATALOG));
+        }
+      } else {
+        catalog = JSON.parse(JSON.stringify(DEFAULT_BOQ_CATALOG));
+        localStorage.setItem(STORAGE_KEYS.CATALOG, JSON.stringify(catalog));
+      }
+
+      const savedBoq = localStorage.getItem(STORAGE_KEYS.BOQ_ITEMS);
+      if (savedBoq && currentVer === BOQ_DATA_VERSION) {
+        try {
+          boqItems = JSON.parse(savedBoq);
+        } catch (e) {
+          boqItems = [];
+        }
+      } else {
+        boqItems = [];
+        localStorage.setItem(STORAGE_KEYS.BOQ_ITEMS, JSON.stringify(boqItems));
+        localStorage.setItem("EPM_BOQ_DATA_VERSION", BOQ_DATA_VERSION);
+      }
+    }
+  }
+
+  function getSectorDefaultProjectInfo(sectorKey) {
+    if (sectorKey === "roads" && typeof ROADS_DEFAULT_PROJECT_INFO !== "undefined") {
+      return ROADS_DEFAULT_PROJECT_INFO;
+    }
+    if (sectorKey === "stormwater" && typeof STORMWATER_DEFAULT_PROJECT_INFO !== "undefined") {
+      return STORMWATER_DEFAULT_PROJECT_INFO;
+    }
+    if (sectorKey === "bridges" && typeof BRIDGES_DEFAULT_PROJECT_INFO !== "undefined") {
+      return BRIDGES_DEFAULT_PROJECT_INFO;
+    }
+    return DEFAULT_PROJECT_INFO;
+  }
+
+  function applySectorProjectDefaults(sectorKey) {
+    const targetSector = sectorKey || "buildings";
+    const defaults = getSectorDefaultProjectInfo(targetSector);
+    projectInfo = {
+      ...projectInfo,
+      ...defaults,
+      sector: targetSector
+    };
+    localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(projectInfo));
+  }
+
   function loadState() {
     // 1. Project Info
     const savedProject = localStorage.getItem(STORAGE_KEYS.PROJECT);
     if (savedProject) {
       try {
         projectInfo = JSON.parse(savedProject);
-        if (!projectInfo.projectName || 
-            projectInfo.projectName.includes("تطوير وتحسين شبكة الطرق") ||
-            projectInfo.projectName.includes("مشروع أنسنة وتطوير ممشى")) {
-          projectInfo.projectName = DEFAULT_PROJECT_INFO.projectName;
-        }
-        if (!projectInfo.engineerName || projectInfo.engineerName.includes("عبد الله بن خالد")) {
-          projectInfo.engineerName = DEFAULT_PROJECT_INFO.engineerName;
-          projectInfo.engineerTitle = DEFAULT_PROJECT_INFO.engineerTitle;
-        }
-        if (!projectInfo.deliveryLocation || projectInfo.deliveryLocation.includes("الإدارة العامة للإشراف")) {
-          projectInfo.deliveryLocation = DEFAULT_PROJECT_INFO.deliveryLocation;
-        }
-        if (!projectInfo.scopeOfWork || projectInfo.scopeOfWork.includes("شبكات الطرق")) {
-          projectInfo.scopeOfWork = DEFAULT_PROJECT_INFO.scopeOfWork;
-        }
-        if (!projectInfo.excludedWork || projectInfo.excludedWork.includes("الجهد الفائق")) {
-          projectInfo.excludedWork = DEFAULT_PROJECT_INFO.excludedWork;
+        const sec = projectInfo.sector || "buildings";
+        const defaults = getSectorDefaultProjectInfo(sec);
+
+        if (
+          !projectInfo.projectName ||
+          (sec === "roads" && !projectInfo.engineerName?.includes("فايز")) ||
+          (sec === "stormwater" && !projectInfo.engineerName?.includes("مصطفى")) ||
+          (sec === "bridges" && !projectInfo.engineerName?.includes("تركي")) ||
+          (sec === "buildings" && !projectInfo.engineerName?.includes("سعيد")) ||
+          projectInfo.municipality?.includes("بلدية شرق الدمام") ||
+          projectInfo.district?.includes("الشاطئ")
+        ) {
+          projectInfo = { ...projectInfo, ...defaults, sector: sec };
         }
         localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(projectInfo));
       } catch (e) {
@@ -55,35 +144,8 @@ const BOQApp = (() => {
       projectInfo = { ...DEFAULT_PROJECT_INFO };
     }
 
-    const BOQ_DATA_VERSION = "2026_PARKS_TENDER_V1";
-    const currentVer = localStorage.getItem("EPM_BOQ_DATA_VERSION");
-
-    // 2. Catalog
-    const savedCatalog = localStorage.getItem(STORAGE_KEYS.CATALOG);
-    if (savedCatalog && currentVer === BOQ_DATA_VERSION) {
-      try {
-        catalog = JSON.parse(savedCatalog);
-      } catch (e) {
-        catalog = JSON.parse(JSON.stringify(DEFAULT_BOQ_CATALOG));
-      }
-    } else {
-      catalog = JSON.parse(JSON.stringify(DEFAULT_BOQ_CATALOG));
-      localStorage.setItem(STORAGE_KEYS.CATALOG, JSON.stringify(catalog));
-    }
-
-    // 3. BOQ Items
-    const savedBoq = localStorage.getItem(STORAGE_KEYS.BOQ_ITEMS);
-    if (savedBoq && currentVer === BOQ_DATA_VERSION) {
-      try {
-        boqItems = JSON.parse(savedBoq);
-      } catch (e) {
-        boqItems = JSON.parse(JSON.stringify(DEFAULT_INITIAL_BOQ));
-      }
-    } else {
-      boqItems = JSON.parse(JSON.stringify(DEFAULT_INITIAL_BOQ));
-      localStorage.setItem(STORAGE_KEYS.BOQ_ITEMS, JSON.stringify(boqItems));
-      localStorage.setItem("EPM_BOQ_DATA_VERSION", BOQ_DATA_VERSION);
-    }
+    // 2. Load Catalog & BOQ Items based on active sector
+    loadSectorCatalogAndItems(projectInfo.sector || "buildings");
   }
 
   function saveProjectInfo(newData) {
@@ -94,18 +156,37 @@ const BOQApp = (() => {
 
   function saveCatalog(newCatalog) {
     catalog = newCatalog;
-    localStorage.setItem(STORAGE_KEYS.CATALOG, JSON.stringify(catalog));
+    const key = isRoadsSector() ? STORAGE_KEYS.ROADS_CATALOG : STORAGE_KEYS.CATALOG;
+    localStorage.setItem(key, JSON.stringify(catalog));
   }
 
   function resetCatalogToDefault() {
-    catalog = JSON.parse(JSON.stringify(DEFAULT_BOQ_CATALOG));
+    if (isRoadsSector() && typeof ROADS_BOQ_CATALOG !== "undefined") {
+      catalog = JSON.parse(JSON.stringify(ROADS_BOQ_CATALOG));
+    } else {
+      catalog = JSON.parse(JSON.stringify(DEFAULT_BOQ_CATALOG));
+    }
+    boqItems = [];
+    saveBoqItems();
     saveCatalog(catalog);
     renderCatalogDrawer();
     renderSectionTabs();
+    renderBoqTable();
+  }
+
+  function clearBoqTable() {
+    boqItems = [];
+    currentActiveSectionFilter = "all";
+    saveBoqItems();
+    renderCatalogDrawer();
+    renderSectionTabs();
+    renderBoqTable();
+    showToast("تم تفريغ جدول الكميات لبدء تجربة بناء جديدة.");
   }
 
   function saveBoqItems() {
-    localStorage.setItem(STORAGE_KEYS.BOQ_ITEMS, JSON.stringify(boqItems));
+    const key = isRoadsSector() ? STORAGE_KEYS.ROADS_BOQ_ITEMS : STORAGE_KEYS.BOQ_ITEMS;
+    localStorage.setItem(key, JSON.stringify(boqItems));
     calculateSummary();
     updateHeaderSummary();
   }
@@ -207,15 +288,30 @@ const BOQApp = (() => {
   }
 
   function selectSector(sectorKey) {
-    projectInfo.sector = sectorKey;
+    const prevSector = projectInfo.sector;
+    applySectorProjectDefaults(sectorKey);
     const hiddenInput = document.getElementById("proj_sector");
     if (hiddenInput) hiddenInput.value = sectorKey;
-    localStorage.setItem(STORAGE_KEYS.PROJECT, JSON.stringify(projectInfo));
-    updateSectorCardVisuals();
-    
+    fillProjectForm();
+    updateHeaderSummary();
+
+    // Load sector-specific BOQ Catalog and BOQ Items (Roads vs General)
+    if (isRoadsSector(prevSector) !== isRoadsSector(sectorKey) || catalog.length === 0) {
+      loadSectorCatalogAndItems(sectorKey);
+      currentActiveSectionFilter = "all";
+      renderCatalogDrawer();
+      renderSectionTabs();
+      renderBoqTable();
+      calculateSummary();
+      updateHeaderSummary();
+      if (typeof AdminPanel !== "undefined" && AdminPanel.init) {
+        AdminPanel.init();
+      }
+    }
+
     const titles = {
-      roads: "مشاريع الطرق والسلامة المرورية",
-      buildings: "مشاريع المباني والمرافق البلدية",
+      roads: "مشاريع الطرق (نموذج تشغيل وصيانة الطرق - 5 تصنيفات)",
+      buildings: "مشاريع المباني والمرافق البلدية (نموذج إنشاءات عامة)",
       stormwater: "مشاريع تصريف مياه الأمطار ودرء أخطار السيول",
       bridges: "مشاريع الجسور والأنفاق الإنشائية"
     };
@@ -223,11 +319,43 @@ const BOQApp = (() => {
   }
 
   function updateSectorCardVisuals() {
-    const currentSector = projectInfo.sector || "roads";
+    const currentSector = projectInfo.sector || "buildings";
     document.querySelectorAll(".sector-card").forEach(card => {
       const sec = card.dataset.sector;
       card.classList.toggle("active", sec === currentSector);
     });
+
+    const isRoads = isRoadsSector(currentSector);
+
+    // Update RFP Header Title in Screen 1
+    const rfpTitleTextEl = document.getElementById("rfpHeaderTitleText");
+    if (rfpTitleTextEl) {
+      rfpTitleTextEl.textContent = isRoads
+        ? "إعداد وثائق كراسة الطرح (النموذج المعتمد - تشغيل وصيانة الطرق)"
+        : "إعداد وثائق كراسة الطرح (النموذج المعتمد - إنشاءات عامة)";
+    }
+
+    // Update Official PDF Reference Link & Badge
+    const rfpPdfLink = document.getElementById("rfpOfficialPdfLink");
+    const rfpPdfLabel = document.getElementById("rfpOfficialPdfLabel");
+    if (rfpPdfLink) {
+      rfpPdfLink.href = isRoads
+        ? "نموذج كراسة الشروط والمواصفات (تشغيل وصيانة الطرق) (1).pdf"
+        : "نموذج كراسة الشروط والمواصفات (إنشاءات عامة).pdf";
+    }
+    if (rfpPdfLabel) {
+      rfpPdfLabel.textContent = isRoads
+        ? "نموذج الكراسة: تشغيل وصيانة الطرق"
+        : "نموذج الكراسة: إنشاءات عامة";
+    }
+
+    // Update Catalog Drawer Header in Screen 2
+    const catalogTitleEl = document.getElementById("catalogDrawerHeaderTitle");
+    if (catalogTitleEl) {
+      catalogTitleEl.innerHTML = isRoads
+        ? '<i class="fas fa-road"></i> دليل بنود صيانة الطرق'
+        : '<i class="fas fa-book-open"></i> دليل بنود الأنسنة';
+    }
   }
 
   function updateTenderCostHint() {
@@ -247,9 +375,15 @@ const BOQApp = (() => {
     if (!listEl) return;
 
     let html = "";
-    const query = filterText.toLowerCase();
+    const searchInput = document.getElementById("catalogSearchInput");
+    const effectiveFilter = filterText !== "" ? filterText : (searchInput ? searchInput.value.trim() : "");
+    const query = effectiveFilter.toLowerCase();
 
     catalog.forEach(sec => {
+      if (currentActiveSectionFilter !== "all" && currentActiveSectionFilter !== sec.id && !query) {
+        return;
+      }
+
       const filteredItems = sec.items.filter(item => {
         if (!query) return true;
         return (
@@ -314,11 +448,21 @@ const BOQApp = (() => {
       `;
     });
 
+    if (boqItems.length > 0) {
+      html += `
+        <button class="sec-tab-btn" onclick="BOQApp.clearBoqTable()" style="margin-right:auto; color:#dc2626; border-color:#fecaca; background:#fef2f2;" title="تفريغ الجدول والبدء من جديد">
+          <i class="fas fa-trash-can"></i>
+          <span>تفريغ الجدول</span>
+        </button>
+      `;
+    }
+
     tabsContainer.innerHTML = html;
   }
 
   function filterSection(secId) {
     currentActiveSectionFilter = secId;
+    renderCatalogDrawer();
     renderSectionTabs();
     renderBoqTable();
   }
@@ -330,11 +474,11 @@ const BOQApp = (() => {
     const item = sec.items.find(i => i.id === itemId);
     if (!item) return;
 
-    // Determine hierarchical item number
+    // Preserve official item code linked to technical description
     const secItems = boqItems.filter(i => i.sectionId === sectionId);
     const secPrefix = sec.codePrefix || (catalog.indexOf(sec) + 1);
     const itemIndex = secItems.length + 1;
-    const itemNo = `${secPrefix}-${itemIndex}`;
+    const itemNo = item.code || `${secPrefix}-${itemIndex}`;
 
     const newBoqItem = {
       id: "boq-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
@@ -343,6 +487,9 @@ const BOQApp = (() => {
       itemNo: itemNo,
       name: item.name,
       description: item.description,
+      templateDescription: item.description,
+      placeholderValues: {},
+      hasPlaceholders: Boolean(item.hasPlaceholders || (item.description && /\.{2,}/.test(item.description))),
       selectedSpec: (item.specs && item.specs.length > 0) ? item.specs[0] : "",
       customSpec: "",
       unit: item.unit,
@@ -356,7 +503,37 @@ const BOQApp = (() => {
     saveBoqItems();
     renderSectionTabs();
     renderBoqTable();
-    showToast(`تمت إضافة البند "${item.name}" إلى جدول الكميات`);
+    showToast(`تمت إضافة البند "${item.code} - ${item.name}" إلى جدول الكميات`);
+  }
+
+  function escapeHtmlAttr(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function buildInteractiveDescriptionHtml(item, catItem) {
+    const templateDesc = item.templateDescription || catItem.description || item.description || "";
+    const hasDots = Boolean(item.hasPlaceholders || /\.{2,}/.test(templateDesc));
+
+    if (hasDots && !item.isManualFullEdit) {
+      if (!item.templateDescription) item.templateDescription = templateDesc;
+      if (!item.placeholderValues) item.placeholderValues = {};
+
+      let matchIdx = 0;
+      const htmlWithInputs = escapeHtmlAttr(templateDesc).replace(/\.{2,}(\s+\.{2,})*/g, () => {
+        const idx = matchIdx++;
+        const currentVal = item.placeholderValues[idx] || "";
+        const filledClass = currentVal.trim() ? "filled" : "";
+        return `<input type="text" class="inline-blank-input ${filledClass}" value="${escapeHtmlAttr(currentVal)}" placeholder="أدخل القيمة..." title="فراغ فني مخصص لتعبئة المهندس المشرف" oninput="BOQApp.updatePlaceholderValue('${item.id}', ${idx}, this.value, this)">`;
+      });
+
+      return htmlWithInputs.replace(/\n/g, "<br>");
+    }
+
+    return escapeHtmlAttr(item.description || "").replace(/\n/g, "<br>");
   }
 
   // Render The Interactive BOQ Table
@@ -364,13 +541,13 @@ const BOQApp = (() => {
     const tbody = document.getElementById("boqTableBody");
     if (!tbody) return;
 
-    if (boqItems.length === 0) {
+    if (boqItems.length === 0 && currentActiveSectionFilter === "all") {
       tbody.innerHTML = `
         <tr>
           <td colspan="10" style="text-align: center; padding: 3.5rem 1rem;">
-            <div style="font-size: 2.2rem; color: #cbd5e1; margin-bottom: 0.75rem;"><i class="fas fa-clipboard-list"></i></div>
-            <h4 style="color: #64748b; font-size: 1.1rem; margin-bottom: 0.5rem;">جدول الكميات فارغ حالياً</h4>
-            <p style="color: #94a3b8; font-size: 0.88rem;">يمكنك اختيار وإضافة البنود المطلوبة من القائمة الجانبية المعتمدة على اليمين</p>
+            <div style="font-size: 2.4rem; color: #005a36; opacity: 0.35; margin-bottom: 0.75rem;"><i class="fas fa-clipboard-list"></i></div>
+            <h4 style="color: #1e293b; font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem;">جدول الكميات جاهز للإنشاء</h4>
+            <p style="color: #64748b; font-size: 0.88rem;">اضغط على البند من الدليل الجانبي لإضافته مباشرة الى الجدول</p>
           </td>
         </tr>
       `;
@@ -386,7 +563,7 @@ const BOQApp = (() => {
       }
 
       const secItems = boqItems.filter(i => i.sectionId === sec.id);
-      if (secItems.length === 0 && currentActiveSectionFilter !== "all") {
+      if (secItems.length === 0 && currentActiveSectionFilter === "all") {
         return;
       }
 
@@ -395,10 +572,11 @@ const BOQApp = (() => {
         <tr class="tr-section-header">
           <td colspan="10">
             <div class="section-banner">
-              <div style="display:flex; align-items:center; gap:0.6rem;">
-                <span class="badge-tag" style="background:#005a36; color:#fff; border:none;">قسم ${sec.codePrefix || (sIdx + 1)}</span>
+              <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+                <span class="badge-tag" style="background:#005a36; color:#fff; border:none;">تصنيف ${sec.codePrefix || (sIdx + 1)}</span>
                 <span>${sec.name}</span>
                 <span style="font-size: 0.82rem; color: #64748b; font-weight: normal;">(${secItems.length} بنود مدرجة)</span>
+                ${sec.description && sec.description !== sec.name ? `<span style="font-size: 0.75rem; color: #475569; font-weight: 500; background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${sec.description}</span>` : ''}
               </div>
               <button class="btn btn-outline-primary btn-sm" onclick="BOQApp.promptAddCustomItem('${sec.id}')" style="background:#fff;">
                 <i class="fas fa-plus"></i> إضافة بند مخصص في هذا القسم
@@ -426,6 +604,9 @@ const BOQApp = (() => {
         const price = Number(item.unitPrice || 0);
         const total = qty * price;
         const tafqeet = Tafqeet.convertCurrency(total);
+        const templateDesc = item.templateDescription || catItem.description || item.description || "";
+        const hasPlaceholders = Boolean(item.hasPlaceholders || catItem.hasPlaceholders || /\.{2,}/.test(templateDesc));
+        const interactiveDescHtml = buildInteractiveDescriptionHtml(item, catItem);
 
         html += `
           <tr data-boq-id="${item.id}">
@@ -438,8 +619,35 @@ const BOQApp = (() => {
 
             <!-- 2. وصف الأعمال والمواصفات -->
             <td class="item-desc-cell">
-              <div class="item-title-text">${item.name}</div>
-              <div style="font-size: 0.78rem; color: #64748b; line-height: 1.4;">${item.description || ''}</div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom: 4px; flex-wrap:wrap;">
+                <div class="item-title-text">${item.name}</div>
+                <div style="display:flex; gap:0.35rem; align-items:center;">
+                  ${hasPlaceholders ? `
+                    <span class="placeholder-notice-badge" title="يحتوي هذا البند على أقواس/نقاط فاضية لتعبئتها من قبل المهندس المشرف">
+                      <i class="fas fa-pen-fancy"></i> قابل لتعبئة المهندس (...)
+                    </span>
+                  ` : ''}
+                  <button type="button" class="desc-edit-toggle-btn" onclick="BOQApp.toggleFullDescEditor('${item.id}')" title="تعديل التوصيف الفني الكامل للبند">
+                    <i class="fas fa-edit"></i> تعديل التوصيف
+                  </button>
+                </div>
+              </div>
+
+              <div id="descDisplay_${item.id}" style="font-size: 0.8rem; color: #475569; line-height: 1.65;">${interactiveDescHtml}</div>
+
+              <!-- محرر النص الكامل للتوصيف الفني -->
+              <div id="fullDescEditor_${item.id}" class="desc-full-editor" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; font-size:0.74rem; font-weight:700; color:var(--primary);">
+                  <span><i class="fas fa-pen-to-square"></i> تعديل التوصيف الفني للبند (${item.itemNo}):</span>
+                  ${hasPlaceholders ? `
+                    <button type="button" class="desc-edit-toggle-btn" onclick="BOQApp.resetItemDescription('${item.id}')" style="font-size:0.7rem;">
+                      <i class="fas fa-rotate-left"></i> استعادة حقول الفراغات (...)
+                    </button>
+                  ` : ''}
+                </div>
+                <textarea id="descTextarea_${item.id}" class="desc-full-textarea" 
+                  oninput="BOQApp.updateFullDescription('${item.id}', this.value)">${item.description || ''}</textarea>
+              </div>
               
               <div class="item-spec-box">
                 <!-- Dropdown للمواصفات إن وجدت -->
@@ -454,7 +662,7 @@ const BOQApp = (() => {
 
                 <!-- Text Area للمواصفة الخاصة إذا كان مفعلاً أو لا توجد خيارات -->
                 <div id="customSpecBox_${item.id}" style="${(item.customSpec || availableSpecs.length === 0) ? 'display:block;' : 'display:none;'}">
-                  <textarea class="custom-spec-area" placeholder="اكتب المواصفة الفنية التفصيلية الخاصة هنا..." 
+                  <textarea class="custom-spec-area" placeholder="ملاحظات أو مواصفات فنية إضافية خاصة بالبند (اختياري)..." 
                     onchange="BOQApp.updateItemField('${item.id}', 'customSpec', this.value)">${item.customSpec || ''}</textarea>
                 </div>
               </div>
@@ -524,6 +732,80 @@ const BOQApp = (() => {
     });
 
     tbody.innerHTML = html;
+  }
+
+  function updatePlaceholderValue(itemId, placeholderIdx, value, inputEl) {
+    const item = boqItems.find(i => i.id === itemId);
+    if (!item) return;
+
+    const sec = catalog.find(s => s.id === item.sectionId) || {};
+    const catItem = (sec.items || []).find(ci => ci.id === item.catalogId) || {};
+    const templateDesc = item.templateDescription || catItem.description || item.description || "";
+
+    if (!item.templateDescription) item.templateDescription = templateDesc;
+    if (!item.placeholderValues) item.placeholderValues = {};
+
+    item.placeholderValues[placeholderIdx] = value;
+
+    if (inputEl) {
+      inputEl.classList.toggle("filled", Boolean(value && value.trim()));
+    }
+
+    let matchCounter = 0;
+    item.description = templateDesc.replace(/\.{2,}(\s+\.{2,})*/g, (match) => {
+      const idx = matchCounter++;
+      const filledVal = item.placeholderValues[idx];
+      return (filledVal && filledVal.trim()) ? filledVal.trim() : match;
+    });
+
+    const fullTextarea = document.getElementById(`descTextarea_${itemId}`);
+    if (fullTextarea) {
+      fullTextarea.value = item.description;
+    }
+
+    saveBoqItems();
+  }
+
+  function toggleFullDescEditor(itemId) {
+    const editorEl = document.getElementById(`fullDescEditor_${itemId}`);
+    if (!editorEl) return;
+    const isHidden = editorEl.style.display === "none";
+    editorEl.style.display = isHidden ? "block" : "none";
+    if (isHidden) {
+      const ta = document.getElementById(`descTextarea_${itemId}`);
+      if (ta) ta.focus();
+    }
+  }
+
+  function updateFullDescription(itemId, newText) {
+    const item = boqItems.find(i => i.id === itemId);
+    if (!item) return;
+    item.description = newText;
+    item.isManualFullEdit = true;
+
+    const displayEl = document.getElementById(`descDisplay_${itemId}`);
+    if (displayEl) {
+      displayEl.innerHTML = escapeHtmlAttr(newText).replace(/\n/g, "<br>");
+    }
+
+    saveBoqItems();
+  }
+
+  function resetItemDescription(itemId) {
+    const item = boqItems.find(i => i.id === itemId);
+    if (!item) return;
+    const sec = catalog.find(s => s.id === item.sectionId) || {};
+    const catItem = (sec.items || []).find(ci => ci.id === item.catalogId) || {};
+    const templateDesc = item.templateDescription || catItem.description || item.description || "";
+
+    item.description = templateDesc;
+    item.templateDescription = templateDesc;
+    item.placeholderValues = {};
+    item.isManualFullEdit = false;
+
+    saveBoqItems();
+    renderBoqTable();
+    showToast("تمت استعادة النص الأصلي وحقول الفراغات للبند.");
   }
 
   function handleSpecChange(itemId, value) {
@@ -752,11 +1034,16 @@ const BOQApp = (() => {
     getBoqItems: () => boqItems,
     saveCatalog,
     resetCatalogToDefault,
+    clearBoqTable,
     switchScreen,
     addItemToBoq,
     filterSection,
     handleSpecChange,
     updateItemField,
+    updatePlaceholderValue,
+    toggleFullDescEditor,
+    updateFullDescription,
+    resetItemDescription,
     updateSource,
     updateQtyPrice,
     duplicateBoqItem,

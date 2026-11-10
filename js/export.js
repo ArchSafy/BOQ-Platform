@@ -360,8 +360,12 @@ const ExportSystem = (() => {
       bridges: "مشاريع الجسور والأنفاق الإنشائية"
     };
 
+    const isRoads = p.sector === "roads";
+    const approvedModelName = isRoads ? "تشغيل وصيانة الطرق" : "إنشاءات عامة";
+
     return {
-      title: `نموذج كراسة الشروط والمواصفات (إنشاءات عامة) - المعتمد بموجب قرار وزير المالية رقم (1440)`,
+      title: `نموذج كراسة الشروط والمواصفات (${approvedModelName}) - المعتمد بموجب قرار وزير المالية رقم (1440)`,
+      approvedModelName: approvedModelName,
       sectorTitle: sectorTitles[p.sector] || "إنشاءات عامة",
       projectName: p.projectName || "مشروع إنشاء حدائق وساحات بمدينة الدمام م 4",
       projectNumber: p.projectNumber || "EPM-PRK-2026-004",
@@ -449,10 +453,10 @@ const ExportSystem = (() => {
                 new TextRun({ text: "\nوزارة البلديات والإسكان - أمانة المنطقة الشرقية", bold: true, size: 24, color: "005a36" }),
                 new TextRun({ text: "\nالإدارة العامة للإشراف - إدارة مشاريع الأنسنة", bold: true, size: 22, color: "b88a44" }),
                 new TextRun({ text: "\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n", color: "cbd5e1" }),
-                new TextRun({ text: "كراسة الشروط والمواصفات الفنية الكاملة", bold: true, size: 36, color: "005a36" }),
+                new TextRun({ text: `نموذج كراسة الشروط والمواصفات (${data.approvedModelName})`, bold: true, size: 36, color: "005a36" }),
                 new TextRun({ text: `\n${data.projectName}`, bold: true, size: 30, color: "1e293b" }),
                 new TextRun({ text: `\nرقم المنافسة / المشروع: ${data.projectNumber}`, size: 24, color: "64748b" }),
-                new TextRun({ text: `\nتاريخ الإصدار: ${data.date}`, size: 22, color: "64748b" }),
+                new TextRun({ text: `\nتاريخ الإصدار: ${data.releaseDate || ''}`, size: 22, color: "64748b" }),
                 new TextRun({ text: "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n", color: "cbd5e1" })
               ]
             }),
@@ -624,10 +628,10 @@ const ExportSystem = (() => {
       <div style="border: 2.5px solid #005a36; border-radius: 12px; padding: 25px; margin-bottom: 25px; text-align: center; background: #fbfdfc;">
         <div style="font-size: 15px; font-weight: bold; color: #005a36;">المملكة العربية السعودية - أمانة المنطقة الشرقية</div>
         <div style="font-size: 13px; color: #b88a44; font-weight: bold; margin-top: 4px;">الإدارة العامة للإشراف - إدارة مشاريع الأنسنة</div>
-        <div style="font-size: 22px; font-weight: 900; color: #005a36; margin: 15px 0 5px 0;">كراسة الشروط والمواصفات الفنية للمشروع</div>
+        <div style="font-size: 22px; font-weight: 900; color: #005a36; margin: 15px 0 5px 0;">نموذج كراسة الشروط والمواصفات (${data.approvedModelName})</div>
         <div style="font-size: 16px; font-weight: 800; color: #1e293b;">${data.projectName}</div>
         <div style="font-size: 12px; color: #64748b; margin-top: 8px;">
-          رقم المنافسة: <strong>${data.projectNumber}</strong> | مدة التنفيذ: <strong>${data.duration}</strong> | التاريخ: <strong>${data.date}</strong>
+          رقم المنافسة: <strong>${data.projectNumber}</strong> | مدة التنفيذ: <strong>${data.duration}</strong> | التاريخ: <strong>${data.releaseDate || ''}</strong>
         </div>
       </div>
 

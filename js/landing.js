@@ -36,6 +36,7 @@ const LandingAuth = (() => {
 
     if (els.year) els.year.textContent = new Date().getFullYear();
 
+    initDates();
     bindEvents();
     initReveal();
 
@@ -205,6 +206,35 @@ const LandingAuth = (() => {
     if (msg && message) msg.textContent = message;
   }
 
+  function initDates() {
+    const hijriEl = document.getElementById("lpHijriDate");
+    const gregEl = document.getElementById("lpGregorianDate");
+    if (!hijriEl && !gregEl) return;
+
+    try {
+      const now = new Date();
+      if (hijriEl) {
+        const hijriFormatter = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric"
+        });
+        hijriEl.textContent = hijriFormatter.format(now);
+      }
+      if (gregEl) {
+        const gregFormatter = new Intl.DateTimeFormat("ar-SA", {
+          day: "numeric",
+          month: "long",
+          year: "numeric"
+        });
+        gregEl.textContent = `${gregFormatter.format(now)} م`;
+      }
+    } catch (e) {
+      // Fallback preserves initial text
+    }
+  }
+
   /* ---------------- Transitions ---------------- */
 
   function showLanding() {
@@ -212,7 +242,7 @@ const LandingAuth = (() => {
     els.landing.classList.remove("is-leaving");
     els.landing.setAttribute("aria-hidden", "false");
     resetSubmit();
-    document.title = "النظام المتكامل لإعداد وتسعير كراسات الطرح | الإدارة العامة للإشراف";
+    document.title = "النظام المتكامل لإعداد وتسعير كراسات الطرح | أمانة المنطقة الشرقية";
   }
 
   function enterApp(session, { animate, announce }) {
@@ -223,7 +253,8 @@ const LandingAuth = (() => {
       document.title = "منصة إعداد وتسعير كراسات الطرح | أمانة المنطقة الشرقية";
 
       if (els.userChip) {
-        els.userChip.innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(session.username)}`;
+        const displayName = session.username || session.user || session.name || "المهندس";
+        els.userChip.innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(displayName)}`;
       }
 
       // التوجيه البرمجي إلى شاشة "بيانات المشروع والمنافسة"
