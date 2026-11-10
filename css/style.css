@@ -1318,6 +1318,140 @@ body {
   display: block;
 }
 
+.sector-lock-badge {
+  position: absolute;
+  top: 9px;
+  left: 9px;
+  display: none;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.sector-card.locked-sector {
+  opacity: 0.55;
+  background: #f8fafc;
+  border-style: dashed;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+.sector-card.locked-sector:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: #fca5a5;
+}
+
+.sector-card.locked-sector .sector-lock-badge {
+  display: inline-flex;
+}
+
+.sector-access-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: #f0fdf4;
+  color: #005a36;
+  border: 1px solid #bbf7d0;
+}
+
+.sector-access-status-badge.executive {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+/* Confidentiality & Price Masking Bar */
+.boq-confidentiality-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  margin-bottom: 0.85rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1.5px solid #fcd34d;
+  box-shadow: 0 2px 8px rgba(180, 83, 9, 0.06);
+}
+
+.boq-conf-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  color: #78350f;
+  font-weight: 600;
+}
+
+.boq-conf-shield {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  background: #b45309;
+  color: #ffffff;
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.btn-mask-prices {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.38rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid #b45309;
+  background: #ffffff;
+  color: #92400e;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-mask-prices:hover {
+  background: #b45309;
+  color: #ffffff;
+}
+
+.btn-mask-prices.active {
+  background: #005a36;
+  border-color: #005a36;
+  color: #ffffff;
+}
+
+/* Masked Prices Mode */
+body.prices-masked .price-input,
+body.prices-masked .total-cell,
+body.prices-masked .tafqeet-cell,
+body.prices-masked .catalog-item-price,
+body.prices-masked #topBarTotal,
+body.prices-masked #summarySubtotal,
+body.prices-masked #summaryVat,
+body.prices-masked #summaryGrandTotal,
+body.prices-masked #summaryTafqeetText {
+  filter: blur(6px);
+  user-select: none;
+  pointer-events: none;
+  transition: filter 0.25s ease;
+}
+
 .form-sub-card {
   background: #ffffff;
   border: 1px solid var(--border);

@@ -12,6 +12,45 @@ const LandingAuth = (() => {
   const REMEMBER_KEY = "EPM_BOQ_REMEMBER_USER_V1";
   const TARGET_SCREEN = "screenProjectInfo";
 
+  const SECTOR_AUTH_CONFIG = {
+    buildings: {
+      badge: "بوابة قطاع المباني والمرافق البلدية",
+      shortBadge: "قطاع المباني",
+      demoUser: "eng.saeed",
+      engineerName: "م/ سعيد محمد بالحداد",
+      deptName: "إدارة الإشراف على المباني والمرافق البلدية"
+    },
+    roads: {
+      badge: "بوابة قطاع مشاريع الطرق",
+      shortBadge: "قطاع الطرق",
+      demoUser: "eng.fayez",
+      engineerName: "م/ فايز محمد الشهري",
+      deptName: "إدارة الإشراف على مشاريع الطرق"
+    },
+    stormwater: {
+      badge: "بوابة قطاع تصريف مياه الأمطار",
+      shortBadge: "قطاع الأمطار",
+      demoUser: "eng.mustafa",
+      engineerName: "م/ مصطفى الناصر",
+      deptName: "إدارة الإشراف على مشاريع تصريف مياه الأمطار"
+    },
+    bridges: {
+      badge: "بوابة قطاع الجسور والأنفاق",
+      shortBadge: "قطاع الجسور",
+      demoUser: "eng.turki",
+      engineerName: "م/ تركي القحطاني",
+      deptName: "إدارة الإشراف على مشاريع الجسور والأنفاق"
+    },
+    all: {
+      badge: "الإدارة العامة للإشراف (صلاحية شاملة)",
+      shortBadge: "صلاحية شاملة",
+      demoUser: "gm.fahad",
+      engineerName: "م/ فهد بن ناصر القحطاني",
+      deptName: "الإدارة العامة للإشراف — لجنة التسعير والاعتماد"
+    }
+  };
+
+  let selectedSector = "buildings";
   let els = {};
 
   function init() {
@@ -29,7 +68,11 @@ const LandingAuth = (() => {
       registerBtn: document.getElementById("lpRegisterBtn"),
       logoutBtn: document.getElementById("logoutBtn"),
       userChip: document.getElementById("headerUserChip"),
-      year: document.getElementById("lpYear")
+      year: document.getElementById("lpYear"),
+      sectorInput: document.getElementById("lpSelectedSector"),
+      sectorBadge: document.getElementById("lpAuthSectorBadge"),
+      sectorBadgeText: document.getElementById("lpAuthSectorBadgeText"),
+      demoUserHint: document.getElementById("lpDemoUserHint")
     };
 
     if (!els.landing) return;
@@ -38,6 +81,7 @@ const LandingAuth = (() => {
 
     initDates();
     bindEvents();
+    selectLandingSector("buildings", false);
     initReveal();
 
     const session = getSession();
@@ -45,6 +89,45 @@ const LandingAuth = (() => {
       enterApp(session, { animate: false, announce: false });
     } else {
       showLanding();
+    }
+  }
+
+  function selectLandingSector(sectorKey, focusLogin = true) {
+    const cfg = SECTOR_AUTH_CONFIG[sectorKey] || SECTOR_AUTH_CONFIG.buildings;
+    selectedSector = sectorKey;
+    if (els.sectorInput) els.sectorInput.value = sectorKey;
+
+    document.querySelectorAll("[data-lp-sector]").forEach(btn => {
+      btn.classList.toggle("active", btn.getAttribute("data-lp-sector") === sectorKey);
+    });
+
+    if (els.sectorBadge && els.sectorBadgeText) {
+      els.sectorBadge.classList.toggle("executive", sectorKey === "all");
+      els.sectorBadge.innerHTML = `
+        <i class="fas ${sectorKey === 'all' ? 'fa-crown' : 'fa-shield-halved'}"></i>
+        <span id="lpAuthSectorBadgeText">${cfg.badge}</span>
+      `;
+    }
+
+    if (els.demoUserHint) {
+      els.demoUserHint.textContent = `(${cfg.engineerName})`;
+    }
+
+    if (els.username) {
+      els.username.placeholder = `اسم المستخدم (مثال: ${cfg.demoUser})`;
+      const currentVal = els.username.value.trim();
+      const allDemoUsers = Object.values(SECTOR_AUTH_CONFIG).map(c => c.demoUser);
+      if (!currentVal || allDemoUsers.includes(currentVal)) {
+        els.username.value = cfg.demoUser;
+      }
+    }
+
+    if (focusLogin && els.card) {
+      els.card.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => {
+        if (els.password && els.username.value) els.password.focus();
+        else if (els.username) els.username.focus();
+      }, 250);
     }
   }
 
@@ -78,6 +161,15 @@ const LandingAuth = (() => {
     }
 
     els.form.addEventListener("submit", handleSubmit);
+
+    // Sector selection buttons (Hero cards + Login Card pills)
+    document.querySelectorAll("[data-lp-sector]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const secKey = btn.getAttribute("data-lp-sector");
+        const isHeroCard = btn.classList.contains("lp-portal-card");
+        selectLandingSector(secKey, isHeroCard);
+      });
+    });
 
     [els.username, els.password].forEach(input => {
       input.addEventListener("input", () => setFieldError(input, false));
@@ -187,13 +279,21 @@ const LandingAuth = (() => {
   }
 
   /**
-   * نقطة الربط مع خدمة المصادقة. حالياً تُنشئ جلسة محلية فقط.
+   * نقطة الربط مع خدمة المصادقة. حالياً تُنشئ جلسة محلية مع صلاحية القطاع المحدد.
    */
   function authenticate(username /*, password */) {
+    const cfg = SECTOR_AUTH_CONFIG[selectedSector] || SECTOR_AUTH_CONFIG.buildings;
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve({ username, loginAt: new Date().toISOString() });
-      }, 750);
+        resolve({
+          username,
+          allowedSector: selectedSector,
+          sectorTitle: cfg.deptName,
+          shortBadge: cfg.shortBadge,
+          engineerName: cfg.engineerName,
+          loginAt: new Date().toISOString()
+        });
+      }, 650);
     });
   }
 
@@ -254,7 +354,13 @@ const LandingAuth = (() => {
 
       if (els.userChip) {
         const displayName = session.username || session.user || session.name || "المهندس";
-        els.userChip.innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(displayName)}`;
+        const secBadge = session.shortBadge || (session.allowedSector === "all" ? "صلاحية شاملة" : "قطاع مخصص");
+        const iconClass = session.allowedSector === "all" ? "fa-crown" : "fa-lock";
+        els.userChip.innerHTML = `<i class="fas fa-user-circle"></i> ${escapeHtml(displayName)} <span style="opacity:0.65;">|</span> <span style="font-size:0.74rem; color:#ffd978;"><i class="fas ${iconClass}"></i> ${escapeHtml(secBadge)}</span>`;
+      }
+
+      if (typeof BOQApp !== "undefined" && typeof BOQApp.applySessionPermissions === "function") {
+        BOQApp.applySessionPermissions(session);
       }
 
       // التوجيه البرمجي إلى شاشة "بيانات المشروع والمنافسة"
@@ -267,7 +373,10 @@ const LandingAuth = (() => {
         const firstField = document.getElementById("proj_projectName");
         if (firstField) setTimeout(() => firstField.focus({ preventScroll: true }), 150);
         if (typeof BOQApp !== "undefined" && typeof BOQApp.showToast === "function") {
-          BOQApp.showToast(`مرحباً ${escapeHtml(session.username)}، ابدأ بإدخال بيانات المشروع والمنافسة.`);
+          const roleMsg = session.allowedSector === "all"
+            ? "صلاحية شاملة لكافة القطاعات الأربعة"
+            : `مسار مخصص: ${session.sectorTitle || ""}`;
+          BOQApp.showToast(`مرحباً ${escapeHtml(session.username)} — تم الدخول بـ (${roleMsg})`);
         }
       }
       resetSubmit();

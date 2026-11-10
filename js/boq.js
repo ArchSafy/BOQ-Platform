@@ -18,9 +18,31 @@ const BOQApp = (() => {
   let catalog = [];
   let boqItems = [];
   let currentActiveSectionFilter = "all";
+  let allowedSector = "all";
+
+  const DEPT_TITLES = {
+    buildings: "إدارة الإشراف على المباني والمرافق البلدية",
+    roads: "إدارة الإشراف على مشاريع الطرق",
+    stormwater: "إدارة الإشراف على مشاريع تصريف مياه الأمطار",
+    bridges: "إدارة الإشراف على مشاريع الجسور والأنفاق"
+  };
 
   function init() {
+    try {
+      const rawSession = sessionStorage.getItem("EPM_BOQ_SESSION_V1");
+      if (rawSession) {
+        const parsed = JSON.parse(rawSession);
+        if (parsed && parsed.allowedSector) {
+          allowedSector = parsed.allowedSector;
+        }
+      }
+    } catch (e) {}
+
     loadState();
+    if (allowedSector && allowedSector !== "all" && projectInfo.sector !== allowedSector) {
+      applySectorProjectDefaults(allowedSector);
+      loadSectorCatalogAndItems(allowedSector);
+    }
     bindEvents();
     renderAll();
   }
@@ -287,7 +309,43 @@ const BOQApp = (() => {
     updateTenderCostHint();
   }
 
-  function selectSector(sectorKey) {
+  function applySessionPermissions(session) {
+    allowedSector = (session && session.allowedSector) ? session.allowedSector : "all";
+    if (allowedSector !== "all") {
+      selectSector(allowedSector, true);
+    } else {
+      updateSectorCardVisuals();
+    }
+  }
+
+  function togglePriceConfidentiality() {
+    const isMasked = document.body.classList.toggle("prices-masked");
+    const btn = document.getElementById("togglePriceMaskBtn");
+    const lbl = document.getElementById("togglePriceMaskLabel");
+    if (btn) {
+      btn.classList.toggle("active", isMasked);
+      const icon = btn.querySelector("i");
+      if (icon) {
+        icon.className = isMasked ? "fas fa-eye" : "fas fa-eye-slash";
+      }
+    }
+    if (lbl) {
+      lbl.textContent = isMasked
+        ? "إظهار الأسعار التقديرية السرية"
+        : "إخفاء الأسعار التقديرية (****)";
+    }
+    showToast(isMasked
+      ? "🔒 تم تفعيل وضع السرية وإخفاء الأسعار التقديرية."
+      : "🔓 تم إظهار الأسعار التقديرية للمختص المصرح له.");
+  }
+
+  function selectSector(sectorKey, forceAllow = false) {
+    if (!forceAllow && allowedSector && allowedSector !== "all" && sectorKey !== allowedSector) {
+      const authDept = DEPT_TITLES[allowedSector] || allowedSector;
+      showToast(`⛔ غير مصرح: حسابك مخوّل فقط لـ (${authDept}). بيانات وأسعار القطاعات الأخرى سرية وفق نظام م/128.`);
+      return;
+    }
+
     const prevSector = projectInfo.sector;
     applySectorProjectDefaults(sectorKey);
     const hiddenInput = document.getElementById("proj_sector");
@@ -309,21 +367,45 @@ const BOQApp = (() => {
       }
     }
 
-    const titles = {
-      roads: "مشاريع الطرق (نموذج تشغيل وصيانة الطرق - 5 تصنيفات)",
-      buildings: "مشاريع المباني والمرافق البلدية (نموذج إنشاءات عامة)",
-      stormwater: "مشاريع تصريف مياه الأمطار ودرء أخطار السيول",
-      bridges: "مشاريع الجسور والأنفاق الإنشائية"
-    };
-    showToast(`تم تعيين قطاع المنافسة: ${titles[sectorKey] || sectorKey}`);
+    if (!forceAllow) {
+      const titles = {
+        roads: "مشاريع الطرق (نموذج تشغيل وصيانة الطرق - 5 تصنيفات)",
+        buildings: "مشاريع المباني والمرافق البلدية (نموذج إنشاءات عامة)",
+        stormwater: "مشاريع تصريف مياه الأمطار ودرء أخطار السيول",
+        bridges: "مشاريع الجسور والأنفاق الإنشائية"
+      };
+      showToast(`تم تعيين قطاع المنافسة: ${titles[sectorKey] || sectorKey}`);
+    }
   }
 
   function updateSectorCardVisuals() {
     const currentSector = projectInfo.sector || "buildings";
     document.querySelectorAll(".sector-card").forEach(card => {
       const sec = card.dataset.sector;
+      const isLocked = Boolean(allowedSector && allowedSector !== "all" && sec !== allowedSector);
       card.classList.toggle("active", sec === currentSector);
+      card.classList.toggle("locked-sector", isLocked);
     });
+
+    // Update Sector Access Status Badge in Screen 1
+    const accessBadge = document.getElementById("sectorAccessStatusBadge");
+    if (accessBadge) {
+      if (allowedSector === "all") {
+        accessBadge.classList.add("executive");
+        accessBadge.innerHTML = `<i class="fas fa-crown"></i> صلاحية شاملة — مسموح بالتنقل بين القطاعات الأربعة`;
+      } else {
+        accessBadge.classList.remove("executive");
+        const deptName = DEPT_TITLES[currentSector] || "القطاع المحدد";
+        accessBadge.innerHTML = `<i class="fas fa-lock"></i> مسار معزول أمنياً — مخصص لـ (${deptName})`;
+      }
+    }
+
+    // Update Confidentiality Text in Screen 2
+    const confTextEl = document.getElementById("boqConfidentialityText");
+    if (confTextEl) {
+      const deptName = DEPT_TITLES[currentSector] || "الإدارة المختصة";
+      confTextEl.innerHTML = `الأسعار التقديرية في هذا الجدول سرية ومقيدة لمنسوبي <strong>${deptName}</strong> فقط وفق نظام المنافسات والمشتريات الحكومية (م/128).`;
+    }
 
     const isRoads = isRoadsSector(currentSector);
 
@@ -1056,6 +1138,8 @@ const BOQApp = (() => {
     openExportModal,
     closeExportModal,
     selectSector,
+    applySessionPermissions,
+    togglePriceConfidentiality,
     showToast
   };
 
