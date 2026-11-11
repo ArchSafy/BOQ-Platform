@@ -45,7 +45,7 @@ const LandingAuth = (() => {
       badge: "الإدارة العامة للإشراف (صلاحية شاملة)",
       shortBadge: "صلاحية شاملة",
       demoUser: "eng.majed",
-      engineerName: "م/ فهد بن ناصر القحطاني",
+      engineerName: "م/ ماجد بن سليمان القرشي",
       deptName: "الإدارة العامة للإشراف — لجنة التسعير والاعتماد"
     }
   };
