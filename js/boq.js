@@ -483,8 +483,12 @@ const BOQApp = (() => {
             <span>${sec.name}</span>
             <span style="font-size:0.75rem;">${filteredItems.length}</span>
           </div>
-          ${filteredItems.map(item => `
-            <div class="catalog-item-card" onclick="BOQApp.addItemToBoq('${sec.id}', '${item.id}')" title="انقر لإضافة البند إلى جدول الكميات">
+          ${filteredItems.map(item => {
+            const isAdded = boqItems.some(
+              b => b.catalogId === item.id || (item.code && b.itemNo === item.code && b.sectionId === sec.id)
+            );
+            return `
+            <div class="catalog-item-card ${isAdded ? 'catalog-item-added' : ''}" onclick="BOQApp.addItemToBoq('${sec.id}', '${item.id}')" title="${isAdded ? 'تمت إضافة هذا البند من قبل في الجدول' : 'انقر لإضافة البند إلى جدول الكميات'}">
               <div class="catalog-item-header">
                 <span class="catalog-item-code">${item.code}</span>
                 <span class="catalog-item-price">${Number(item.estimatedPrice || 0).toLocaleString()} ر.س / ${item.unit}</span>
@@ -492,11 +496,15 @@ const BOQApp = (() => {
               <div class="catalog-item-title">${item.name}</div>
               <div class="catalog-item-desc">${item.description || ""}</div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; font-size:0.74rem;">
-                <span style="color:#005a36; font-weight:700;"><i class="fas fa-plus-circle"></i> إضافة للجدول</span>
+                ${isAdded
+                  ? `<span style="color:#b45309; font-weight:700;"><i class="fas fa-check-circle"></i> مُضاف بالجدول</span>`
+                  : `<span style="color:#005a36; font-weight:700;"><i class="fas fa-plus-circle"></i> إضافة للجدول</span>`
+                }
                 <span style="color:#64748b; font-family:monospace;">${item.structuralCode || ''}</span>
               </div>
             </div>
-          `).join("")}
+          `;
+          }).join("")}
         </div>
       `;
     });
@@ -556,6 +564,23 @@ const BOQApp = (() => {
     const item = sec.items.find(i => i.id === itemId);
     if (!item) return;
 
+    // التحقق من عدم إضافة نفس البند مرتين
+    const existingItem = boqItems.find(
+      b => b.catalogId === item.id || (item.code && b.itemNo === item.code && b.sectionId === sectionId)
+    );
+    if (existingItem) {
+      showToast(`تنبيه: تمت إضافة هذا البند من قبل (${item.code} - ${item.name}) ولا يمكن تكراره في الجدول.`, "warning");
+      const existingRow = document.querySelector(`tr[data-boq-id="${existingItem.id}"]`);
+      if (existingRow) {
+        existingRow.scrollIntoView({ behavior: "smooth", block: "center" });
+        existingRow.classList.remove("boq-row-duplicate-flash");
+        void existingRow.offsetWidth;
+        existingRow.classList.add("boq-row-duplicate-flash");
+        setTimeout(() => existingRow.classList.remove("boq-row-duplicate-flash"), 2400);
+      }
+      return;
+    }
+
     // Preserve official item code linked to technical description
     const secItems = boqItems.filter(i => i.sectionId === sectionId);
     const secPrefix = sec.codePrefix || (catalog.indexOf(sec) + 1);
@@ -583,6 +608,7 @@ const BOQApp = (() => {
 
     boqItems.push(newBoqItem);
     saveBoqItems();
+    renderCatalogDrawer();
     renderSectionTabs();
     renderBoqTable();
     showToast(`تمت إضافة البند "${item.code} - ${item.name}" إلى جدول الكميات`);
@@ -959,6 +985,7 @@ const BOQApp = (() => {
   function removeBoqItem(itemId) {
     boqItems = boqItems.filter(i => i.id !== itemId);
     saveBoqItems();
+    renderCatalogDrawer();
     renderSectionTabs();
     renderBoqTable();
     showToast("تم حذف البند من جدول الكميات.");
@@ -1087,7 +1114,7 @@ const BOQApp = (() => {
     document.getElementById("exportModal").classList.remove("active");
   }
 
-  function showToast(message) {
+  function showToast(message, type = "success") {
     let container = document.getElementById("toastContainer");
     if (!container) {
       container = document.createElement("div");
@@ -1096,9 +1123,13 @@ const BOQApp = (() => {
       document.body.appendChild(container);
     }
 
+    const isWarning = type === "warning" || message.startsWith("تنبيه") || message.startsWith("⛔");
     const toast = document.createElement("div");
-    toast.className = "toast";
-    toast.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;"></i> <span>${message}</span>`;
+    toast.className = `toast ${isWarning ? "toast-warning" : ""}`;
+    const iconHtml = isWarning
+      ? `<i class="fas fa-triangle-exclamation" style="color:#f59e0b; font-size:1.15rem;"></i>`
+      : `<i class="fas fa-check-circle" style="color:#10b981;"></i>`;
+    toast.innerHTML = `${iconHtml} <span>${message}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {
@@ -1106,7 +1137,7 @@ const BOQApp = (() => {
       toast.style.transform = "translateY(15px)";
       toast.style.transition = "all 0.3s ease";
       setTimeout(() => toast.remove(), 300);
-    }, 3200);
+    }, isWarning ? 4000 : 3200);
   }
 
   return {

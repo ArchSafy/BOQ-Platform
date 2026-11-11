@@ -1524,3 +1524,31 @@ body.prices-masked #summaryTafqeetText {
   border-bottom: none;
 }
 
+/* ==================== Duplicate Item Prevention & Warning Styles ==================== */
+.toast.toast-warning {
+  background: #451a03;
+  color: #fef3c7;
+  border-right: 5px solid #f59e0b;
+  box-shadow: 0 12px 28px rgba(180, 83, 9, 0.35);
+}
+
+.catalog-item-card.catalog-item-added {
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+
+.catalog-item-card.catalog-item-added:hover {
+  border-color: #f59e0b;
+}
+
+@keyframes boqDuplicatePulse {
+  0%, 100% { background-color: transparent; }
+  25%, 75% { background-color: #fef3c7; }
+  50% { background-color: #fde68a; }
+}
+
+tr.boq-row-duplicate-flash td {
+  animation: boqDuplicatePulse 1.8s ease-in-out;
+}
+
+
