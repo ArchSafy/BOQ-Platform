@@ -44,7 +44,7 @@ const LandingAuth = (() => {
     all: {
       badge: "الإدارة العامة للإشراف (صلاحية شاملة)",
       shortBadge: "صلاحية شاملة",
-      demoUser: "gm.fahad",
+      demoUser: "eng.majed",
       engineerName: "م/ فهد بن ناصر القحطاني",
       deptName: "الإدارة العامة للإشراف — لجنة التسعير والاعتماد"
     }
